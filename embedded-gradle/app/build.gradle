@@ -27,7 +27,7 @@ repositories {
 }
 
 dependencies {
-    compile 'org.xwalk:xwalk_core_library_beta:18+'
+    compile 'org.xwalk:xwalk_core_library_canary:4.4.0'
 }
 
 android {
@@ -67,5 +67,6 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.0.1'
+    compile 'com.android.support:appcompat-v7:23.1.1'
+    compile 'com.android.support:design:23.1.1'
 }
