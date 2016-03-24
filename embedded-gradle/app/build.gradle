@@ -27,7 +27,7 @@ repositories {
 }
 
 dependencies {
-    compile 'org.xwalk:xwalk_core_library_canary:4.4.0'
+    compile 'org.xwalk:xwalk_core_library:17+'
 }
 
 android {
@@ -36,7 +36,7 @@ android {
 
     defaultConfig {
         applicationId "org.example.xwalkembedded"
-        minSdkVersion 15
+        minSdkVersion 19
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"

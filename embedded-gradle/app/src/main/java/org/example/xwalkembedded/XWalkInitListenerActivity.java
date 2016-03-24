@@ -152,20 +152,20 @@ public class XWalkInitListenerActivity extends Activity implements XWalkInitiali
                 return false;
             }
 
-            @Override
-            public void onReceivedResponseHeaders(XWalkView view,
-                                                  XWalkWebResourceRequest request,
-                                                  XWalkWebResourceResponse response) {
-                if (request.isForMainFrame() && response.getStatusCode() < 404) {
-                    Map<String, String> headers = response.getResponseHeaders();
-                    Log.d("fujunwei", "=====onReceivedResponseHeaders size " + headers.size() + " ==== " + response.getMimeType());
-
-                    for (String name : headers.keySet()) {
-                        Log.d("fujunwei", "+++++onReceivedResponseHeaders " + name + " " + headers.get(name));
-                    }
-                    Log.d("fujunwei", "==========onReceivedResponseHeaders " + headers.get("Set-Cookie"));
-                }
-            }
+//            @Override
+//            public void onReceivedResponseHeaders(XWalkView view,
+//                                                  XWalkWebResourceRequest request,
+//                                                  XWalkWebResourceResponse response) {
+//                if (request.isForMainFrame() && response.getStatusCode() < 404) {
+//                    Map<String, String> headers = response.getResponseHeaders();
+//                    Log.d("fujunwei", "=====onReceivedResponseHeaders size " + headers.size() + " ==== " + response.getMimeType());
+//
+//                    for (String name : headers.keySet()) {
+//                        Log.d("fujunwei", "+++++onReceivedResponseHeaders " + name + " " + headers.get(name));
+//                    }
+//                    Log.d("fujunwei", "==========onReceivedResponseHeaders " + headers.get("Set-Cookie"));
+//                }
+//            }
         });
 
         xwalkView.setUIClient(new XWalkUIClient(xwalkView) {

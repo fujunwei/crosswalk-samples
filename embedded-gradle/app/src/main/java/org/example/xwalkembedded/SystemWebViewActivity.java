@@ -1,33 +1,37 @@
 package org.example.xwalkembedded;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Proxy;
-import android.net.ProxyInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.app.Activity;
 import android.os.Parcelable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.ArrayMap;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import org.xwalk.core.XWalkSettings;
-import org.xwalk.core.XWalkView;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import android.util.ArrayMap;
+import java.net.ServerSocket;
 
-public class MainActivity extends AppCompatActivity {
-    private XWalkView mXWalkView;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+
+/**
+ * Created by fujunwei on 16-3-23.
+ */
+public class SystemWebViewActivity extends AppCompatActivity {
+    private WebView mSystemWebView;
     final static  String TAG = "fujunwei";
 
     @Override
@@ -47,9 +51,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mXWalkView = (XWalkView) findViewById(R.id.xwalkWebView);
-        XWalkSettings settings = mXWalkView.getSettings();
-//        mXWalkView.load("http://crosswalk-project.org/", null);
+        mSystemWebView = (WebView) findViewById(R.id.systemWebView);
+        WebSettings settings = mSystemWebView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setSupportMultipleWindows(true);
+//        mSystemWebView.loadUrl("http://crosswalk-project.org/");
+        mSystemWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                view.loadUrl(url);
+                return true;
+            }
+        });
     }
 
     @Override
@@ -73,10 +86,12 @@ public class MainActivity extends AppCompatActivity {
 //            updateNewProxy();
             setProxyKK(this, "child-p.intel.com", 912);
         } else if (id == R.id.action_baidu) {
-            mXWalkView.load("http://www.baidu.com/", null);
+            mSystemWebView.loadUrl("http://www.baidu.com/");
         } else if (id == R.id.action_video) {
-            mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
+            mSystemWebView.loadUrl("file:///android_asset/video.html");//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
         }
+
+        ServerSocket socket = new ServerSocket();
 
         return super.onOptionsItemSelected(item);
     }
