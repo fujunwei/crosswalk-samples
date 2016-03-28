@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Proxy;
+import android.net.ProxyInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -21,7 +22,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.ServerSocket;
 
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -63,6 +63,8 @@ public class SystemWebViewActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+        Log.d(TAG, "=====in system webview ");
     }
 
     @Override
@@ -91,76 +93,7 @@ public class SystemWebViewActivity extends AppCompatActivity {
             mSystemWebView.loadUrl("file:///android_asset/video.html");//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
         }
 
-        ServerSocket socket = new ServerSocket();
-
         return super.onOptionsItemSelected(item);
-    }
-
-    // Extract a ProxyConfig object from the supplied Intent's extra data
-    // bundle. The android.net.ProxyProperties class is not exported from
-    // the Android SDK, so we have to use reflection to get at it and invoke
-    // methods on it. If we fail, return an empty proxy config (meaning
-    // 'direct').
-    // TODO(sgurun): once android.net.ProxyInfo is public, rewrite this.
-    private String updateNewProxy() {
-        try {
-            final String buildDirectProxy = "buildDirectProxy";
-            String className;
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                className = "android.net.ProxyProperties";
-            } else {
-                className = "android.net.ProxyInfo";
-            }
-//            Class<?> cls = Class.forName(className);
-//            Method buildProxy = cls.getDeclaredMethod(buildDirectProxy, new Class[]{String.class, int.class});
-//            android.net.ProxyInfo proxyInfo = (ProxyInfo) buildProxy.invoke(cls, new Object[]{"", 912});
-
-            Class proxyPropertiesClass = Class.forName("android.net.ProxyProperties");
-
-            //get ProxyProperties constructor
-            Class[] proxyPropertiesCtorParamTypes = new Class[3];
-            proxyPropertiesCtorParamTypes[0] = String.class;
-            proxyPropertiesCtorParamTypes[1] = int.class;
-            proxyPropertiesCtorParamTypes[2] = String.class;
-
-            Constructor proxyPropertiesCtor = proxyPropertiesClass.getConstructor(proxyPropertiesCtorParamTypes);
-
-            //create the parameters for the constructor
-            Object[] proxyPropertiesCtorParams = new Object[3];
-            proxyPropertiesCtorParams[0] = "child-p.intel.com";
-            proxyPropertiesCtorParams[1] = 912;
-            proxyPropertiesCtorParams[2] = null;
-
-            //create a new object using the params
-            Object proxySettings = proxyPropertiesCtor.newInstance(proxyPropertiesCtorParams);
-
-            Intent intent = new Intent();
-            intent.setAction(Proxy.PROXY_CHANGE_ACTION);
-            Log.d("fujunwei", "====before proxy info");
-            intent.putExtra("android.intent.extra.PROXY_INFO", (Parcelable)proxySettings);
-            Log.d("fujunwei", "====after proxy info");
-
-            sendBroadcast(intent);
-
-        } catch (ClassNotFoundException ex) {
-            Log.e(TAG, "Using no proxy configuration due to exception:" + ex);
-            return null;
-        } catch (NoSuchMethodException ex) {
-            Log.e(TAG, "Using no proxy configuration due to exception:" + ex);
-            return null;
-        } catch (IllegalAccessException ex) {
-            Log.e(TAG, "Using no proxy configuration due to exception:" + ex);
-            return null;
-        } catch (InvocationTargetException ex) {
-            Log.e(TAG, "Using no proxy configuration due to exception:" + ex);
-            return null;
-        } catch (NullPointerException ex) {
-            Log.e(TAG, "Using no proxy configuration due to exception:" + ex);
-            return null;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     // from https://stackoverflow.com/questions/19979578/android-webview-set-proxy-programatically-kitkat
@@ -186,18 +119,21 @@ public class SystemWebViewActivity extends AppCompatActivity {
                         Intent intent = new Intent(Proxy.PROXY_CHANGE_ACTION);
 
                         /*********** optional, may be need in future *************/
-                        String CLASS_NAME = "android.net.ProxyProperties";
-                        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
-                            CLASS_NAME = "android.net.ProxyProperties";
+                        String className;
+                        String proxyInfo;
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                            className = "android.net.ProxyProperties";
+                            proxyInfo = "proxy";
                         } else {
-                            CLASS_NAME = "android.net.ProxyInfo";
+                            className = "android.net.ProxyInfo";
+                            proxyInfo = "android.intent.extra.PROXY_INFO";
                         }
 
-                        Class cls = Class.forName(CLASS_NAME);
+                        Class cls = Class.forName(className);
                         Constructor constructor = cls.getConstructor(String.class, Integer.TYPE, String.class);
                         constructor.setAccessible(true);
                         Object proxyProperties = constructor.newInstance(host, port, "*.intel.com");
-                        intent.putExtra("proxy", (Parcelable) proxyProperties);
+                        intent.putExtra(proxyInfo, (Parcelable) proxyProperties);
                         /*********** optional, may be need in future *************/
 
                         onReceiveMethod.invoke(rec, appContext, intent);

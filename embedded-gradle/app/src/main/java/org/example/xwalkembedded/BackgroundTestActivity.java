@@ -21,7 +21,7 @@ import org.xwalk.core.XWalkView;
 
 public class BackgroundTestActivity extends Activity {
 
-    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String TAG = BackgroundTestActivity.class.getSimpleName();
 
     XWalkView mXwalkView;
 

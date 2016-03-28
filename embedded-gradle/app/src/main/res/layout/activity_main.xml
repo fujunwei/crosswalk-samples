@@ -21,7 +21,7 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/system_webview" />
+    <include layout="@layout/xwalk_webview" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
