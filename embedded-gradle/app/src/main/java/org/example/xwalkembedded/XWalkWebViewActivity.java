@@ -30,6 +30,7 @@ import android.util.ArrayMap;
 public class XWalkWebViewActivity extends AppCompatActivity {
     private XWalkView mXWalkView;
     final static  String TAG = "fujunwei";
+    private StreamProxy mProxy;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +78,11 @@ public class XWalkWebViewActivity extends AppCompatActivity {
         } else if (id == R.id.action_baidu) {
             mXWalkView.load("http://www.baidu.com/", null);
         } else if (id == R.id.action_video) {
+            if (mProxy == null) {
+                mProxy = new StreamProxy();
+                mProxy.init();
+                mProxy.start();
+            }
             mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
         }
 

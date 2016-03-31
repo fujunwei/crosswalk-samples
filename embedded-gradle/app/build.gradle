@@ -27,7 +27,8 @@ repositories {
 }
 
 dependencies {
-    compile 'org.xwalk:xwalk_core_library:17+'
+    compile 'org.xwalk:xwalk_core_library_canary:4.4.0'
+    compile 'com.android.support:appcompat-v7:23.1.1'
 }
 
 android {
@@ -62,6 +63,7 @@ android {
             }
         }
     }
+    useLibrary 'org.apache.http.legacy'
 }
 
 dependencies {

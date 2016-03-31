@@ -45,4 +45,4 @@ https://crosswalk-project.org/documentation/embedding_crosswalk/crosswalk_aar.ht
 dependencies {
     compile 'org.xwalk:xwalk_core_library_beta:18+'
 }
-mvn install:install-file -DgroupId=org.xwalk -DartifactId=xwalk_core_library_canary -Dversion=4.4.0 -Dpackaging=aar  -Dfile=./out/Release/xwalk_core_library.aar -DgeneratePom=true
+mvn install:install-file -DgroupId=org.xwalk -DartifactId=xwalk_core_library_canary -Dversion=4.4.0 -Dpackaging=aar  -Dfile=./out/Debug/xwalk_core_library.aar -DgeneratePom=true
