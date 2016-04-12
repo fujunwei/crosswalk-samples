@@ -56,14 +56,18 @@ android {
                 abiFilters "armeabi-v7a", ""
             }
         }
-        x86 {
-            versionCode defaultConfig.versionCode + 4
-            ndk {
-                abiFilters "x86", ""
-            }
-        }
+//        x86 {
+//            versionCode defaultConfig.versionCode + 4
+//            ndk {
+//                abiFilters "x86", ""
+//            }
+//        }
     }
     useLibrary 'org.apache.http.legacy'
+
+     lintOptions {
+          abortOnError false
+      }
 }
 
 dependencies {

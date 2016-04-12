@@ -1,9 +1,13 @@
 package org.example.xwalkembedded;
 
+import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.net.Proxy;
 import android.net.ProxyInfo;
+import android.net.Uri;
 import android.nfc.Tag;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,9 +22,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import org.example.socketproxy.SocketProxy;
 import org.xwalk.core.XWalkSettings;
 import org.xwalk.core.XWalkView;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -31,6 +37,7 @@ public class XWalkWebViewActivity extends AppCompatActivity {
     private XWalkView mXWalkView;
     final static  String TAG = "fujunwei";
     private StreamProxy mProxy;
+    private SocketProxy mSocketProxy;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +66,7 @@ public class XWalkWebViewActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
         return true;
     }
 
@@ -71,17 +79,47 @@ public class XWalkWebViewActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            MediaPlayer mPlayer = new MediaPlayer();
+            String url = "http://programmerguru.com/android-tutorial/wp-content/uploads/2013/04/hosannatelugu.mp3";
+            try {
+                mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                mPlayer.setDataSource(url);
+                mPlayer.prepare();
+                mPlayer.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             return true;
         } else if (id == R.id.action_proxy) {
 //            updateNewProxy();
             setProxyKK(this, "122.96.25.242", 9399); // Error proxy ip child-p.intel.com:912
         } else if (id == R.id.action_baidu) {
-            mXWalkView.load("http://www.baidu.com/", null);
+//            if (mProxy == null) {
+//                mProxy = new StreamProxy();
+//                mProxy.init();
+//                mProxy.start();
+//            }
+            mSocketProxy = new SocketProxy(8123);
+            try {
+                mSocketProxy.startProxy();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            mXWalkView.load("file:///android_asset/index.html", null);
         } else if (id == R.id.action_video) {
-            if (mProxy == null) {
-                mProxy = new StreamProxy();
-                mProxy.init();
-                mProxy.start();
+//            if (mProxy == null) {
+//                mProxy = new StreamProxy();
+//                mProxy.init();
+//                mProxy.start();
+//            }
+            mSocketProxy = new SocketProxy(8123);
+            try {
+                mSocketProxy.startProxy();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
             mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
         }
