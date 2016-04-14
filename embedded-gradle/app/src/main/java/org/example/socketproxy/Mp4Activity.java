@@ -8,9 +8,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 
-import org.example.socketproxy.C;
-import org.example.socketproxy.HttpGetProxy;
-import org.example.socketproxy.Utils;
 import org.example.xwalkembedded.R;
 
 import android.app.Activity;
@@ -36,47 +33,48 @@ public class Mp4Activity extends Activity{
     private HttpGetProxy proxy;
     private long startTimeMills;
 //    	private String videoUrl ="http://video.cztv.com/video/rzx/201208/15/1345010952759.mp4";
-    private String videoUrl = "http://122.96.25.242:8088/war.mp4";
+    private String videoUrl = "http://140.207.235.11/youku/6973A300A713582B7DA5BF3646/030020010056FC997DEB1E003E8803DB5D103F-C213-BF86-7329-3141F4A803A7.mp4";
+    //http://122.96.25.242:8088/war.mp4";
     private boolean enablePrebuffer=true;//预加载开关
     private long waittime=8000;//等待缓冲时间
     @Override
     public void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
-        setContentView(R.layout.new_sockets);
-        setTitle("玩转 Android MediaPlayer之视频预加载(优化)---hellogv");
-
-        new File(C.getBufferDir()).mkdirs();//创建预加载文件的文件夹
-        Utils.clearCacheFile(C.getBufferDir());//清除前面的预加载文件
-
-        //初始化VideoView
-        mediaController=new MediaController(this);
-        mVideoView = (VideoView) findViewById(R.id.surface_view);
-        mVideoView.setMediaController(mediaController);
-        mVideoView.setOnPreparedListener(mOnPreparedListener);
-
-        if (enablePrebuffer) {//使用预加载
-            //初始化代理服务器
-            proxy = new HttpGetProxy(9110);
-            proxy.asynStartProxy();
-            String[] urls = proxy.getLocalURL(videoUrl);
-            String mp4Url=urls[0];
-            videoUrl=urls[1];
-
-            try {
-                String prebufferFilePath = proxy.prebuffer(mp4Url,
-                        HttpGetProxy.SIZE);
-
-                Log.e(TAG, "预加载文件：" + prebufferFilePath);
-            } catch (Exception ex) {
-                Log.e(TAG, ex.toString());
-                Log.e(TAG, Utils.getExceptionMessage(ex));
-            }
-            delayToStartPlay.sendEmptyMessageDelayed(0,waittime);
-        }else//不使用预加载
-            delayToStartPlay.sendEmptyMessageDelayed(0,0);
-
-        // 一直显示MediaController
-        showController.sendEmptyMessageDelayed(0, 1000);
+//        super.onCreate(icicle);
+//        setContentView(R.layout.new_sockets);
+//        setTitle("玩转 Android MediaPlayer之视频预加载(优化)---hellogv");
+//
+//        new File(C.getBufferDir()).mkdirs();//创建预加载文件的文件夹
+//        Utils.clearCacheFile(C.getBufferDir());//清除前面的预加载文件
+//
+//        //初始化VideoView
+//        mediaController=new MediaController(this);
+//        mVideoView = (VideoView) findViewById(R.id.surface_view);
+//        mVideoView.setMediaController(mediaController);
+//        mVideoView.setOnPreparedListener(mOnPreparedListener);
+//
+//        if (enablePrebuffer) {//使用预加载
+//            //初始化代理服务器
+//            proxy = new HttpGetProxy(9110);
+//            proxy.asynStartProxy();
+//            String[] urls = proxy.getLocalURL(videoUrl);
+//            String mp4Url=urls[0];
+//            videoUrl=urls[1];
+//
+//            try {
+//                String prebufferFilePath = proxy.prebuffer(mp4Url,
+//                        HttpGetProxy.SIZE);
+//
+//                Log.e(TAG, "预加载文件：" + prebufferFilePath);
+//            } catch (Exception ex) {
+//                Log.e(TAG, ex.toString());
+//                Log.e(TAG, Utils.getExceptionMessage(ex));
+//            }
+//            delayToStartPlay.sendEmptyMessageDelayed(0,waittime);
+//        }else//不使用预加载
+//            delayToStartPlay.sendEmptyMessageDelayed(0,0);
+//
+//        // 一直显示MediaController
+//        showController.sendEmptyMessageDelayed(0, 1000);
     }
 
     @Override

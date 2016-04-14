@@ -35,7 +35,7 @@ public class Player implements OnBufferingUpdateListener,
 		
 		mTimer.schedule(mTimerTask, 0, 1000);
 		
-		proxy = new HttpGetProxy(9090);
+//		proxy = new HttpGetProxy(9090);
 
 //		try {
 //			proxy.startProxy();

@@ -3,16 +3,17 @@ package org.example.xwalkembedded;
 import android.content.Context;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-import org.example.socketproxy.C;
 import org.example.socketproxy.HttpGetProxy;
 import org.example.socketproxy.Utils;
 import org.xwalk.core.XWalkResourceClient;
 import org.xwalk.core.XWalkView;
 import org.xwalk.core.internal.XWalkViewInternal;
+import android.media.MediaPlayer.OnPreparedListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,8 +24,11 @@ import java.util.Map;
  */
 public class MyResourceClient extends XWalkResourceClient {
     String TAG = "MyResourceClient";
-    private boolean enablePrebuffer=true;//预加载开关
     private HttpGetProxy proxy;
+    static private final int PREBUFFER_SIZE= 4*1024*1024;
+    private long startTimeMills;
+    String id = "";
+    private long waittime=8000;//等待缓冲时间
 
     public MyResourceClient(XWalkView xWalkView) {
         super(xWalkView);
@@ -33,35 +37,30 @@ public class MyResourceClient extends XWalkResourceClient {
     @Override
     public boolean shouldOverrideResourceLoading(XWalkView view,
             MediaPlayer mediaPlayer, Context context, Uri uri, Map<String, String> headers) {
-        String localAddress = "";
 
-        new File(C.getBufferDir()).mkdirs();//创建预加载文件的文件夹
-        Utils.clearCacheFile(C.getBufferDir());//清除前面的预加载文件
+        //创建预加载视频文件存放文件夹
+        new File(getBufferDir()).mkdirs();
 
-        if (enablePrebuffer) {//使用预加载
-            //初始化代理服务器
-            if (proxy == null) {
-                proxy = new HttpGetProxy(9110);
-                proxy.asynStartProxy();
-            }
-            String[] urls = proxy.getLocalURL(uri.toString());
-            String mp4Url=urls[0];
-            localAddress =urls[1];
+        // 初始化代理服务器
+        proxy = new HttpGetProxy(getBufferDir(),// 预加载视频文件存放路径
+                PREBUFFER_SIZE,// 预加载体积
+                10);// 预加载文件上限
 
-            Log.e(TAG, "==== download Url  = " + mp4Url);
-            try {
-                String prebufferFilePath = proxy.prebuffer(mp4Url,
-                        HttpGetProxy.SIZE);
-
-                Log.e(TAG, "预加载文件：" + prebufferFilePath);
-            } catch (Exception ex) {
-                Log.e(TAG, ex.toString());
-                Log.e(TAG, Utils.getExceptionMessage(ex));
-            }
+        id = System.currentTimeMillis() + "";
+        try {
+            proxy.startDownload(id, uri.toString(), true);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
 
-        Log.e(TAG, "==== local address url  = " + localAddress);
-        Uri localUri = Uri.parse(localAddress);
+//        delayToStartPlay.sendEmptyMessageDelayed(0, waittime);
+//
+//        mediaPlayer.setOnPreparedListener(mOnPreparedListener);
+
+        String proxyUrl = proxy.getLocalURL(id);
+        Log.e(TAG, "==== local address url  = " + proxyUrl);
+        Uri localUri = Uri.parse(proxyUrl);
         try {
             mediaPlayer.setDataSource(context, localUri, headers);
         } catch (IOException e) {
@@ -69,5 +68,28 @@ public class MyResourceClient extends XWalkResourceClient {
         }
 
         return true;
+    }
+
+//    private OnPreparedListener mOnPreparedListener=new OnPreparedListener(){
+//        @Override
+//        public void onPrepared(MediaPlayer mp) {
+//            mVideoView.start();
+//            long duration=System.currentTimeMillis() - startTimeMills;
+//            Log.e(TAG,"等待缓冲时间:"+waittime+",首次缓冲时间:"+duration);
+//        }
+//    };
+//
+//    private Handler delayToStartPlay = new Handler() {
+//        public void handleMessage(Message msg) {
+//            startTimeMills=System.currentTimeMillis();
+//            String proxyUrl = proxy.getLocalURL(id);
+//            mVideoView.setVideoPath(proxyUrl);
+//        }
+//    };
+//
+    static public String getBufferDir(){
+        String bufferDir = Environment.getExternalStorageDirectory()
+                .getAbsolutePath() + "/ProxyBuffer/files";
+        return bufferDir;
     }
 }

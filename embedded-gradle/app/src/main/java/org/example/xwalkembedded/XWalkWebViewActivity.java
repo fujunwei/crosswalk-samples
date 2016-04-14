@@ -57,6 +57,7 @@ public class XWalkWebViewActivity extends AppCompatActivity {
         });
 
         mXWalkView = (XWalkView) findViewById(R.id.xwalkWebView);
+        mXWalkView.setResourceClient(new MyResourceClient(mXWalkView));
         XWalkSettings settings = mXWalkView.getSettings();
 //        mXWalkView.load("http://crosswalk-project.org/", null);
         Log.d(TAG, "=====in crosswalk webview ");
@@ -100,13 +101,13 @@ public class XWalkWebViewActivity extends AppCompatActivity {
 //                mProxy.init();
 //                mProxy.start();
 //            }
-            mSocketProxy = new SocketProxy(8123);
-            try {
-                mSocketProxy.startProxy();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+//            mSocketProxy = new SocketProxy(8123);
+//            try {
+//                mSocketProxy.startProxy();
+//            } catch (IOException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            }
             mXWalkView.load("file:///android_asset/index.html", null);
         } else if (id == R.id.action_video) {
 //            if (mProxy == null) {
