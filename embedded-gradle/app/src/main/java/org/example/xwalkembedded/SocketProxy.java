@@ -1,4 +1,4 @@
-package org.example.socketproxy;
+package org.example.xwalkembedded;
 
 import java.io.BufferedReader;
 import java.io.IOException;

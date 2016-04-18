@@ -22,7 +22,7 @@ public class HttpParser {
 	final static private String RANGE_PARAMS_0="Range: bytes=0-";
 	final static private String CONTENT_RANGE_PARAMS="Content-Range: bytes ";
 	
-	private static final  int HEADER_BUFFER_LENGTH_MAX = 1024 * 10;
+	private static final  int HEADER_BUFFER_LENGTH_MAX = 1024 * 50;
 	private byte[] headerBuffer = new byte[HEADER_BUFFER_LENGTH_MAX];
 	private int headerBufferLength=0;
 	

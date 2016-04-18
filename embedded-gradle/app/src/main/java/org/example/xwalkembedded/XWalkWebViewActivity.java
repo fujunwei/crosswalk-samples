@@ -94,7 +94,8 @@ public class XWalkWebViewActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.action_proxy) {
 //            updateNewProxy();
-            setProxyKK(this, "122.96.25.242", 9399); // Error proxy ip child-p.intel.com:912
+//            setProxyKK(this, "122.96.25.242", 9399); // Error proxy ip child-p.intel.com:912
+            mXWalkView.proxySettingsChanged("", 9399, "", null);
         } else if (id == R.id.action_baidu) {
 //            if (mProxy == null) {
 //                mProxy = new StreamProxy();
@@ -108,6 +109,8 @@ public class XWalkWebViewActivity extends AppCompatActivity {
 //                // TODO Auto-generated catch block
 //                e.printStackTrace();
 //            }
+            String[] a = {"*.intel.com", "*.intel2.com"};
+            mXWalkView.proxySettingsChanged("122.96.25.242", 9399, "", a);
             mXWalkView.load("file:///android_asset/index.html", null);
         } else if (id == R.id.action_video) {
 //            if (mProxy == null) {
