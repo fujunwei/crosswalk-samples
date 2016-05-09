@@ -176,6 +176,7 @@ public class HttpGetProxy{
 			remotePort = -1;
 			localUrl = mMediaUrl.replace(remoteHost, localHost + ":" + localPort);
 		}
+		Log.d(TAG, "====local address = " + localUrl + " \n= " + mMediaUrl);
 
 		return localUrl;
 	}
@@ -185,22 +186,22 @@ public class HttpGetProxy{
 			// --------------------------------------
 			// 监听MediaPlayer的请求，MediaPlayer->代理服务器
 			// --------------------------------------
-			Log.i(TAG, "......ready to start...........");
+			Log.i(TAG, "====ready to start...........");
 			try {
 				Socket s = localServer.accept();
 				if(proxy!=null){
 					proxy.closeSockets();
 				}
-				Log.i(TAG, "......started...........");
+				Log.i(TAG, "====started...........");
 				proxy = new Proxy(s);
 				
 				new Thread(){
 					public void run(){
-						Log.i(TAG, "......ready to start...........");
+						Log.i(TAG, "====ready to start...........");
 						try {
 							Socket s = localServer.accept();
 							proxy.closeSockets();
-							Log.i(TAG, "......started...........");
+							Log.i(TAG, "====started...........");
 							proxy = new Proxy(s);
 							proxy.run();
 						} catch (IOException e) {
@@ -249,6 +250,7 @@ public class HttpGetProxy{
 			HttpParser httpParser = null;
 			HttpGetProxyUtils utils = null;
 			int bytes_read;
+			int read_length = 0;
 
 			byte[] local_request = new byte[1024 * 10];
 			byte[] remote_reply = new byte[1024 * 50];
@@ -256,7 +258,7 @@ public class HttpGetProxy{
 			boolean sentResponseHeader = false;
 
 			try {
-				Log.i(TAG, "<----------------------------------->");
+				Log.i(TAG, "<==============>");
 				stopDownload();
 
 				httpParser = new HttpParser(remoteHost, remotePort, localHost,
@@ -272,6 +274,7 @@ public class HttpGetProxy{
 						break;
 					}
 				}
+				Log.e(TAG, "====Read media player request body");
 
 				utils = new HttpGetProxyUtils(sckPlayer, serverAddress);
 				boolean isExists = false;
@@ -281,6 +284,8 @@ public class HttpGetProxy{
 					closeSockets();
 					return;
 				}
+
+				Log.e(TAG, "====Read web server contents");
 				// ------------------------------------------------------
 				// 把网络服务器的反馈发到MediaPlayer，网络服务器->代理服务器->MediaPlayer
 				// ------------------------------------------------------
@@ -300,12 +305,13 @@ public class HttpGetProxy{
 							continue;// 没Response Header则退出本次循环
 
 						// 已完成读取
-						if (proxyResponse._currentPosition > proxyResponse._duration - SIZE) {
-							Log.i(TAG, "....ready....over....");
-							proxyResponse._currentPosition = -1;
-						} else if (proxyResponse._currentPosition != -1) {// 没完成读取
-							proxyResponse._currentPosition += bytes_read;
-						}
+//						if (proxyResponse._currentPosition > proxyResponse._duration - SIZE) {
+//							Log.i(TAG, "....ready....over....");
+//							proxyResponse._currentPosition = -1;
+//						} else if (proxyResponse._currentPosition != -1) {// 没完成读取
+//							proxyResponse._currentPosition += bytes_read;
+//						}
+						read_length += bytes_read;
 
 						continue;// 退出本次while
 					}
@@ -317,6 +323,7 @@ public class HttpGetProxy{
 					sentResponseHeader = true;
 					// send http header to mediaplayer
 					utils.sendToMP(proxyResponse._body);
+					Log.e(TAG, "====Send http response header to media player");
 
 					if (isExists) {// 需要发送预加载到MediaPlayer
 						Log.i(TAG, "----------------->需要发送预加载到MediaPlayer");
@@ -345,9 +352,11 @@ public class HttpGetProxy{
 
 					// 发送剩余数据
 					if (proxyResponse._other != null) {
+						Log.e(TAG, "====Send response other data to media player");
 						utils.sendToMP(proxyResponse._other);
 					}
 				}
+				Log.e(TAG, "====Finished forward stream to media player with local socket " + read_length);
 
 				// 关闭 2个SOCKET
 				closeSockets();

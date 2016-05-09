@@ -17,6 +17,7 @@ import android.media.MediaPlayer.OnPreparedListener;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -29,6 +30,8 @@ public class MyResourceClient extends XWalkResourceClient {
     private long startTimeMills;
     String id = "";
     private long waittime=8000;//等待缓冲时间
+    boolean mOverrideResourceLoading = true;
+    StreamProxySeek mProxy;
 
     public MyResourceClient(XWalkView xWalkView) {
         super(xWalkView);
@@ -37,7 +40,23 @@ public class MyResourceClient extends XWalkResourceClient {
     @Override
     public boolean shouldOverrideResourceLoading(XWalkView view,
             MediaPlayer mediaPlayer, Context context, Uri uri, Map<String, String> headers) {
+        Log.d(TAG, "======in shouldOverrideResourceLoading " + uri.toString());
+        if (!mOverrideResourceLoading) {
+            return false;
+        }
 
+        createSocketProxy(mediaPlayer, context, uri, headers);
+//        createHttpConnectionProxy(mediaPlayer, context, uri, headers);
+//        try {
+//            mediaPlayer.setDataSource(context, Uri.parse("http://www.zhangxinxu.com/study/media/cat.mp4"), headers);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
+        return true;
+    }
+
+    void createSocketProxy(MediaPlayer mediaPlayer, Context context, Uri uri, Map<String, String> headers) {
         //创建预加载视频文件存放文件夹
         new File(getBufferDir()).mkdirs();
 
@@ -59,15 +78,29 @@ public class MyResourceClient extends XWalkResourceClient {
 //        mediaPlayer.setOnPreparedListener(mOnPreparedListener);
 
         String proxyUrl = proxy.getLocalURL(id);
-        Log.e(TAG, "==== local address url  = " + proxyUrl);
         Uri localUri = Uri.parse(proxyUrl);
         try {
             mediaPlayer.setDataSource(context, localUri, headers);
         } catch (IOException e) {
             Log.e(TAG, "Media player set data source failed : " + e);
         }
+    }
 
-        return true;
+    void createHttpConnectionProxy(MediaPlayer mediaPlayer,
+                                   Context context, Uri uri,
+                                   Map<String, String> headers) {
+        if (mProxy == null) {
+            mProxy = new StreamProxySeek();
+            mProxy.init();
+            mProxy.start();
+        }
+        String playurl = String.format(Locale.US, "http://127.0.0.1:%d/%s", 8123, uri.toString());
+        Log.e(TAG, "====shouldOverrideResourceLoading " + uri.toString() + " \n new play url = " + playurl);
+        try {
+            mediaPlayer.setDataSource(context, Uri.parse(playurl), headers);
+        } catch (IOException e) {
+            Log.e(TAG, "Media player set data source failed : " + e);
+        }
     }
 
 //    private OnPreparedListener mOnPreparedListener=new OnPreparedListener(){
@@ -92,4 +125,5 @@ public class MyResourceClient extends XWalkResourceClient {
                 .getAbsolutePath() + "/ProxyBuffer/files";
         return bufferDir;
     }
+
 }

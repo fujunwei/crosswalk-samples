@@ -82,15 +82,15 @@ public class HttpParser {
 		else
 			result._body = result._body.replace(":" + localPort, ":"+ remotePort);
 		//不带Ranage则添加补上，方便后面处理
-		if(result._body.contains(RANGE_PARAMS)==false)
-			result._body = result._body.replace(Config.HTTP_BODY_END,
-					"\r\n"+RANGE_PARAMS_0+Config.HTTP_BODY_END);
-		Log.i(TAG, result._body);
-
-		//获取Ranage的位置
-		String rangePosition=Utils.getSubString(result._body,RANGE_PARAMS,"-");
-		Log.i(TAG,"------->rangePosition:"+rangePosition);
-		result._rangePosition = Integer.valueOf(rangePosition);
+//		if(result._body.contains(RANGE_PARAMS)==false)
+//			result._body = result._body.replace(Config.HTTP_BODY_END,
+//					"\r\n"+RANGE_PARAMS_0+Config.HTTP_BODY_END);
+//		Log.i(TAG, result._body);
+//
+//		//获取Ranage的位置
+//		String rangePosition=Utils.getSubString(result._body,RANGE_PARAMS,"-");
+//		Log.i(TAG,"------->rangePosition:"+rangePosition);
+//		result._rangePosition = Integer.valueOf(rangePosition);
 		
 		return result;
 	}
@@ -115,11 +115,12 @@ public class HttpParser {
 		result._body=httpResponse.get(0);
 		String text = new String(result._body);
 		
-		Log.i(TAG + "<---", text);
+//		Log.i(TAG + "<---", text);
 		//获取二进制数据
 		if(httpResponse.size()==2)
 			result._other = httpResponse.get(1);
-		
+
+		// http://blog.chinaunix.net/uid-11959329-id-3088466.html
 		//样例：Content-Range: bytes 2267097-257405191/257405192
 		try {
 			// 获取起始位置
@@ -133,6 +134,7 @@ public class HttpParser {
 		} catch (Exception ex) {
 			Log.e(TAG, Utils.getExceptionMessage(ex));
 		}
+		Log.e(TAG, "==== the response content startIndex " + result._currentPosition + " endIndex " + result._duration);
 		return result;
 	}
 	

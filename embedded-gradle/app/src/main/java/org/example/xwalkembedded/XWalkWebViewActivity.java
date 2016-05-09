@@ -22,8 +22,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import org.example.socketproxy.SocketProxy;
+import org.xwalk.core.XWalkGeolocationCallback;
 import org.xwalk.core.XWalkSettings;
+import org.xwalk.core.XWalkUIClient;
 import org.xwalk.core.XWalkView;
 
 import java.io.IOException;
@@ -32,6 +33,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import android.util.ArrayMap;
+import android.widget.VideoView;
 
 public class XWalkWebViewActivity extends AppCompatActivity {
     private XWalkView mXWalkView;
@@ -58,6 +60,12 @@ public class XWalkWebViewActivity extends AppCompatActivity {
 
         mXWalkView = (XWalkView) findViewById(R.id.xwalkWebView);
         mXWalkView.setResourceClient(new MyResourceClient(mXWalkView));
+        mXWalkView.setUIClient(new XWalkUIClient(mXWalkView) {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(XWalkView view, String origin,
+                                                           XWalkGeolocationCallback callback) {
+            }
+        });
         XWalkSettings settings = mXWalkView.getSettings();
 //        mXWalkView.load("http://crosswalk-project.org/", null);
         Log.d(TAG, "=====in crosswalk webview ");
@@ -95,7 +103,8 @@ public class XWalkWebViewActivity extends AppCompatActivity {
         } else if (id == R.id.action_proxy) {
 //            updateNewProxy();
 //            setProxyKK(this, "122.96.25.242", 9399); // Error proxy ip child-p.intel.com:912
-            mXWalkView.proxySettingsChanged("", 9399, "", null);
+//            mXWalkView.proxySettingsChanged("", 9396, "", null);
+            VideoView m;
         } else if (id == R.id.action_baidu) {
 //            if (mProxy == null) {
 //                mProxy = new StreamProxy();
@@ -110,7 +119,7 @@ public class XWalkWebViewActivity extends AppCompatActivity {
 //                e.printStackTrace();
 //            }
             String[] a = {"*.intel.com", "*.intel2.com"};
-            mXWalkView.proxySettingsChanged("122.96.25.242", 9399, "", a);
+//            mXWalkView.proxySettingsChanged("122.96.25.242", 9396, "", a);
             mXWalkView.load("file:///android_asset/index.html", null);
         } else if (id == R.id.action_video) {
 //            if (mProxy == null) {

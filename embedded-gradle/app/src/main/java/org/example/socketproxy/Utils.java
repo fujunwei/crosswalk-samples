@@ -70,7 +70,8 @@ public class Utils {
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Log.e(TAG, e.toString());
+			Log.e(TAG, Utils.getExceptionMessage(e));
 		}
 		return urlString;
 	}
