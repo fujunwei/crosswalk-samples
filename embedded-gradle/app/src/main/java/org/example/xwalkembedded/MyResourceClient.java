@@ -1,6 +1,8 @@
 package org.example.xwalkembedded;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Environment;
@@ -14,6 +16,8 @@ import org.xwalk.core.XWalkResourceClient;
 import org.xwalk.core.XWalkView;
 import org.xwalk.core.internal.XWalkViewInternal;
 import android.media.MediaPlayer.OnPreparedListener;
+
+import com.google.android.exoplayer.util.Util;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,9 +36,15 @@ public class MyResourceClient extends XWalkResourceClient {
     private long waittime=8000;//等待缓冲时间
     boolean mOverrideResourceLoading = true;
     StreamProxySeek mProxy;
+    Activity mActivity;
 
     public MyResourceClient(XWalkView xWalkView) {
         super(xWalkView);
+    }
+
+    public MyResourceClient(XWalkView xWalkView, Activity activity) {
+        super(xWalkView);
+        mActivity = activity;
     }
 
     @Override
@@ -45,15 +55,25 @@ public class MyResourceClient extends XWalkResourceClient {
             return false;
         }
 
-        createSocketProxy(mediaPlayer, context, uri, headers);
+//        playWithExoPlayer(context, uri);
+//        createSocketProxy(mediaPlayer, context, uri, headers);
 //        createHttpConnectionProxy(mediaPlayer, context, uri, headers);
-//        try {
-//            mediaPlayer.setDataSource(context, Uri.parse("http://www.zhangxinxu.com/study/media/cat.mp4"), headers);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        try {
+            mediaPlayer.setDataSource(context, Uri.parse("http://www.zhangxinxu.com/study/media/cat.mp4"), headers);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return true;
+    }
+
+    void playWithExoPlayer(Context context, Uri uri) {
+        Intent mpdIntent = new Intent(mActivity, PlayerActivity.class)
+                .setData(uri)
+                .putExtra(PlayerActivity.CONTENT_ID_EXTRA, "Demo Testing".toLowerCase(Locale.US).replaceAll("\\s", "")) //sample.contentId
+                .putExtra(PlayerActivity.CONTENT_TYPE_EXTRA, Util.TYPE_OTHER) //sample.type
+                .putExtra(PlayerActivity.PROVIDER_EXTRA, ""); //sample.provider
+        mActivity.startActivity(mpdIntent);
     }
 
     void createSocketProxy(MediaPlayer mediaPlayer, Context context, Uri uri, Map<String, String> headers) {

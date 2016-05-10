@@ -32,8 +32,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Locale;
+
 import android.util.ArrayMap;
 import android.widget.VideoView;
+
+import com.google.android.exoplayer.util.Util;
 
 public class XWalkWebViewActivity extends AppCompatActivity {
     private XWalkView mXWalkView;
@@ -59,7 +63,7 @@ public class XWalkWebViewActivity extends AppCompatActivity {
         });
 
         mXWalkView = (XWalkView) findViewById(R.id.xwalkWebView);
-        mXWalkView.setResourceClient(new MyResourceClient(mXWalkView));
+        mXWalkView.setResourceClient(new MyResourceClient(mXWalkView, this));
         mXWalkView.setUIClient(new XWalkUIClient(mXWalkView) {
             @Override
             public void onGeolocationPermissionsShowPrompt(XWalkView view, String origin,
@@ -127,17 +131,28 @@ public class XWalkWebViewActivity extends AppCompatActivity {
 //                mProxy.init();
 //                mProxy.start();
 //            }
-            mSocketProxy = new SocketProxy(8123);
-            try {
-                mSocketProxy.startProxy();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
+//            mSocketProxy = new SocketProxy(8123);
+//            try {
+//                mSocketProxy.startProxy();
+//            } catch (IOException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            }
+//            mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
+
+            playWithExoPlayer(Uri.parse("http://38.98.63.21/youku/6568E60CEA308132CFB9D41D0/0300080A0456FCA666C35E2BEEFCF99A5FAF56-554A-D894-0E24-C0C3D42BFEA2.mp4"));
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    void playWithExoPlayer(Uri uri) {
+        Intent mpdIntent = new Intent(this, PlayerActivity.class)
+                .setData(uri)
+                .putExtra(PlayerActivity.CONTENT_ID_EXTRA, "Demo Testing".toLowerCase(Locale.US).replaceAll("\\s", "")) //sample.contentId
+                .putExtra(PlayerActivity.CONTENT_TYPE_EXTRA, Util.TYPE_OTHER) //sample.type
+                .putExtra(PlayerActivity.PROVIDER_EXTRA, ""); //sample.provider
+        startActivity(mpdIntent);
     }
 
     // from https://stackoverflow.com/questions/19979578/android-webview-set-proxy-programatically-kitkat

@@ -29,6 +29,7 @@ repositories {
 dependencies {
     compile 'org.xwalk:xwalk_core_library_canary:4.4.0'
     compile 'com.android.support:appcompat-v7:23.1.1'
+    compile files('libs/library.jar')
 }
 
 android {
