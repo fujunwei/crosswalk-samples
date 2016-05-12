@@ -47,25 +47,25 @@ public class MyResourceClient extends XWalkResourceClient {
         mActivity = activity;
     }
 
-    @Override
-    public boolean shouldOverrideResourceLoading(XWalkView view,
-            MediaPlayer mediaPlayer, Context context, Uri uri, Map<String, String> headers) {
-        Log.d(TAG, "======in shouldOverrideResourceLoading " + uri.toString());
-        if (!mOverrideResourceLoading) {
-            return false;
-        }
-
-//        playWithExoPlayer(context, uri);
-//        createSocketProxy(mediaPlayer, context, uri, headers);
-//        createHttpConnectionProxy(mediaPlayer, context, uri, headers);
-        try {
-            mediaPlayer.setDataSource(context, Uri.parse("http://www.zhangxinxu.com/study/media/cat.mp4"), headers);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return true;
-    }
+//    @Override
+//    public boolean shouldOverrideResourceLoading(XWalkView view,
+//            MediaPlayer mediaPlayer, Context context, Uri uri, Map<String, String> headers) {
+//        Log.d(TAG, "======in shouldOverrideResourceLoading " + uri.toString());
+//        if (!mOverrideResourceLoading) {
+//            return false;
+//        }
+//
+////        playWithExoPlayer(context, uri);
+////        createSocketProxy(mediaPlayer, context, uri, headers);
+////        createHttpConnectionProxy(mediaPlayer, context, uri, headers);
+//        try {
+//            mediaPlayer.setDataSource(context, Uri.parse("http://www.zhangxinxu.com/study/media/cat.mp4"), headers);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//        return true;
+//    }
 
     void playWithExoPlayer(Context context, Uri uri) {
         Intent mpdIntent = new Intent(mActivity, PlayerActivity.class)

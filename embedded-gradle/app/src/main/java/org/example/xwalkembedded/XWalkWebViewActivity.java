@@ -20,6 +20,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceView;
 import android.view.View;
 
 import org.xwalk.core.XWalkGeolocationCallback;
@@ -45,6 +46,9 @@ public class XWalkWebViewActivity extends AppCompatActivity {
     private StreamProxy mProxy;
     private SocketProxy mSocketProxy;
 
+    private SurfaceView surfaceView;
+    private XWalkExoMediaPlayer mXWalkExoMediaPlayer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +67,7 @@ public class XWalkWebViewActivity extends AppCompatActivity {
         });
 
         mXWalkView = (XWalkView) findViewById(R.id.xwalkWebView);
+        surfaceView = (SurfaceView) findViewById(R.id.surface_view);
         mXWalkView.setResourceClient(new MyResourceClient(mXWalkView, this));
         mXWalkView.setUIClient(new XWalkUIClient(mXWalkView) {
             @Override
@@ -71,6 +76,8 @@ public class XWalkWebViewActivity extends AppCompatActivity {
             }
         });
         XWalkSettings settings = mXWalkView.getSettings();
+        mXWalkExoMediaPlayer = new XWalkExoMediaPlayer(this, mXWalkView, surfaceView);
+        mXWalkView.setExMediaPlayer(mXWalkExoMediaPlayer);
 //        mXWalkView.load("http://crosswalk-project.org/", null);
         Log.d(TAG, "=====in crosswalk webview ");
     }
@@ -140,7 +147,12 @@ public class XWalkWebViewActivity extends AppCompatActivity {
 //            }
 //            mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
 
-            playWithExoPlayer(Uri.parse("http://38.98.63.21/youku/6568E60CEA308132CFB9D41D0/0300080A0456FCA666C35E2BEEFCF99A5FAF56-554A-D894-0E24-C0C3D42BFEA2.mp4"));
+            //http://120.52.73.7/103.38.59.16/youku/6572A850BE73078284C1F593A/03002001005721B16ECE05003E88037E969A53-228F-72D7-A8C5-B434E9A4547F.mp4
+            playWithExoPlayer(Uri.parse("http://newflv.sohu.ccgslb.net/244/230/POEwC3H4R93Uurh4cnLJDD.mp4?key=0kb1BMOCLCL3vyDEHgycDHhQKKqTKK-3&n=10&a=50&cip=192.102.204.38&uid=1605121528343088&ca=4&pg=1&pt=5&src=11060001&ch=v&cv=1.0.0&vid=3022642&qd=68000&prod=h5&eye=0"));
+        } else if (id == R.id.action_enableXWalk) {
+            mXWalkView.setVisibility(View.VISIBLE);
+            surfaceView.setVisibility(View.GONE);
+            mXWalkExoMediaPlayer.release();
         }
 
         return super.onOptionsItemSelected(item);

@@ -9,4 +9,6 @@
         android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_video" android:title="@string/load_video"
         android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_enableXWalk" android:title="@string/load_enableXWalk"
+        android:orderInCategory="100" app:showAsAction="never" />
 </menu>

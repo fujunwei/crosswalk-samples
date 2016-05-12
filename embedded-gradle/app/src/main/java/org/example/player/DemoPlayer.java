@@ -339,6 +339,10 @@ public class DemoPlayer implements ExoPlayer.Listener, ChunkSampleSource.EventLi
     player.setPlayWhenReady(playWhenReady);
   }
 
+  public boolean isPlaying() {
+    return player.isPlayWhenReadyCommitted();
+  }
+
   public void seekTo(long positionMs) {
     player.seekTo(positionMs);
   }

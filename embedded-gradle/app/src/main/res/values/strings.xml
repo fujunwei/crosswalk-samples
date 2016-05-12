@@ -3,8 +3,9 @@
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
     <string name="change_proxy">Change proxy</string>
-    <string name="load_baidu">Load youku</string>
+    <string name="load_baidu">Index HTML</string>
     <string name="load_video">Load video</string>
+    <string name="load_enableXWalk">Enable XWalk</string>
     <!-- The user visible name of the application. [CHAR LIMIT=20] -->
     <string name="application_name">ExoPlayer Demo</string>
 
