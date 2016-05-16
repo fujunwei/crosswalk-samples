@@ -5,7 +5,10 @@
     <string name="change_proxy">Change proxy</string>
     <string name="load_baidu">Index HTML</string>
     <string name="load_video">Load video</string>
-    <string name="load_enableXWalk">Enable XWalk</string>
+    <string name="load_enableProxy">Enable Proxy</string>
+    <string name="load_disableProxy">Disable Proxy</string>
+    <string name="load_enableExMediaPlayer">Enable ExMediaPlayer</string>
+    <string name="load_disableExMediaPlayer">Disable ExMediaPlayer</string>
     <!-- The user visible name of the application. [CHAR LIMIT=20] -->
     <string name="application_name">ExoPlayer Demo</string>
 

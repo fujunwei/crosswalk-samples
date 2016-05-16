@@ -87,7 +87,7 @@ public class Utils {
 	 * @param str
 	 * @return
 	 */
-	static protected String getValidFileName(String str)
+	static public String getValidFileName(String str)
     {
         str=str.replace("\\","");
         str=str.replace("/","");
@@ -168,5 +168,31 @@ public class Utils {
 			+"\r\n";
 		}
 		return result;
+	}
+
+	static public String getBufferDir(){
+		String bufferDir = Environment.getExternalStorageDirectory()
+				.getAbsolutePath() + "/ProxyBuffer/files";
+		return bufferDir;
+	}
+
+	/**
+	 * 异步清除过多的缓存文件
+	 * @param dir 缓存文件的路径
+	 * @param MAX 缓存上限
+	 */
+	public static void clearCacheFile(final String dir) {
+		File cacheDir = new File(dir);
+		if (cacheDir.exists() == false) {
+			return;
+		}
+		// 防止listFiles()导致ANR
+		File[] files = cacheDir.listFiles();
+		if (files == null) return;
+
+		for (int i = 0; i < files.length; i++) {
+			files[i].delete();
+		}
+		Log.e(dir,"--------共有"+cacheDir.listFiles().length+"个缓存文件");
 	}
 }

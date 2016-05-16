@@ -23,7 +23,7 @@ import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.View;
 
-import org.xwalk.core.XWalkGeolocationCallback;
+//import org.xwalk.core.XWalkGeolocationCallback;
 import org.xwalk.core.XWalkSettings;
 import org.xwalk.core.XWalkUIClient;
 import org.xwalk.core.XWalkView;
@@ -69,14 +69,15 @@ public class XWalkWebViewActivity extends AppCompatActivity {
         mXWalkView = (XWalkView) findViewById(R.id.xwalkWebView);
         surfaceView = (SurfaceView) findViewById(R.id.surface_view);
         mXWalkView.setResourceClient(new MyResourceClient(mXWalkView, this));
-        mXWalkView.setUIClient(new XWalkUIClient(mXWalkView) {
-            @Override
-            public void onGeolocationPermissionsShowPrompt(XWalkView view, String origin,
-                                                           XWalkGeolocationCallback callback) {
-            }
-        });
+//        mXWalkView.setUIClient(new XWalkUIClient(mXWalkView) {
+//            @Override
+//            public void onGeolocationPermissionsShowPrompt(XWalkView view, String origin,
+//                                                           XWalkGeolocationCallback callback) {
+//            }
+//        });
         XWalkSettings settings = mXWalkView.getSettings();
         mXWalkExoMediaPlayer = new XWalkExoMediaPlayer(this, mXWalkView, surfaceView);
+        mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
         mXWalkView.setExMediaPlayer(mXWalkExoMediaPlayer);
 //        mXWalkView.load("http://crosswalk-project.org/", null);
         Log.d(TAG, "=====in crosswalk webview ");
@@ -148,11 +149,15 @@ public class XWalkWebViewActivity extends AppCompatActivity {
 //            mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
 
             //http://120.52.73.7/103.38.59.16/youku/6572A850BE73078284C1F593A/03002001005721B16ECE05003E88037E969A53-228F-72D7-A8C5-B434E9A4547F.mp4
-            playWithExoPlayer(Uri.parse("http://newflv.sohu.ccgslb.net/244/230/POEwC3H4R93Uurh4cnLJDD.mp4?key=0kb1BMOCLCL3vyDEHgycDHhQKKqTKK-3&n=10&a=50&cip=192.102.204.38&uid=1605121528343088&ca=4&pg=1&pt=5&src=11060001&ch=v&cv=1.0.0&vid=3022642&qd=68000&prod=h5&eye=0"));
-        } else if (id == R.id.action_enableXWalk) {
-            mXWalkView.setVisibility(View.VISIBLE);
-            surfaceView.setVisibility(View.GONE);
-            mXWalkExoMediaPlayer.release();
+            playWithExoPlayer(Uri.parse("http://101.227.216.142/vhot2.qqvideo.tc.qq.com/j0199q9hom4.mp4?vkey=7086CFBEFB7DFD27C61719C7000DB9B78B8DBECC336B74D4DC36C4AB018CB2B569AE533D79FFCA0D6C79AA0CA0B51C6ABB5235A1BC46D39910ED1AE4B36A70C1B6634E18EC59E7B3BFCE1708631C8D10458ABEED44DFCA8A&br=60&platform=2&fmt=auto&level=0&sdtfrom=v5010&locid=67551d9a-bf0d-4b25-bfc8-b2ee2334f02e&size=4580061&ocid=256578988"));
+        } else if (id == R.id.action_enableProxy) {
+            mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
+        } else if (id == R.id.action_disableProxy) {
+            mXWalkExoMediaPlayer.updateProxySetting("", -1);
+        } else if (id == R.id.action_enableExMediaPlayer) {
+            mXWalkView.setExMediaPlayer(mXWalkExoMediaPlayer);
+        } else if (id == R.id.action_disableExMediaPlayer) {
+            mXWalkView.setExMediaPlayer(null);
         }
 
         return super.onOptionsItemSelected(item);

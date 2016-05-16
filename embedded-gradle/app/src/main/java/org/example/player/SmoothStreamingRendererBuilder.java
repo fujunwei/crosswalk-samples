@@ -66,6 +66,9 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
   private final String url;
   private final MediaDrmCallback drmCallback;
 
+  private String proxyHost;
+  private int proxyPort;
+
   private AsyncRendererBuilder currentAsyncBuilder;
 
   public SmoothStreamingRendererBuilder(Context context, String userAgent, String url,
@@ -76,9 +79,21 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
     this.drmCallback = drmCallback;
   }
 
+  public SmoothStreamingRendererBuilder(Context context, String userAgent, String url,
+      MediaDrmCallback drmCallback, String proxyHost, int proxyPort) {
+    this.context = context;
+    this.userAgent = userAgent;
+    this.url = Util.toLowerInvariant(url).endsWith("/manifest") ? url : url + "/Manifest";
+    this.drmCallback = drmCallback;
+
+    this.proxyHost = proxyHost;
+    this.proxyPort = proxyPort;
+  }
+
   @Override
   public void buildRenderers(DemoPlayer player) {
-    currentAsyncBuilder = new AsyncRendererBuilder(context, userAgent, url, drmCallback, player);
+    currentAsyncBuilder = new AsyncRendererBuilder(context, userAgent, url, drmCallback, player,
+            proxyHost, proxyPort);
     currentAsyncBuilder.init();
   }
 
@@ -101,8 +116,11 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
 
     private boolean canceled;
 
+    private String proxyHost;
+    private int proxyPort;
+
     public AsyncRendererBuilder(Context context, String userAgent, String url,
-        MediaDrmCallback drmCallback, DemoPlayer player) {
+        MediaDrmCallback drmCallback, DemoPlayer player, String proxyHost, int proxyPort) {
       this.context = context;
       this.userAgent = userAgent;
       this.drmCallback = drmCallback;
@@ -110,6 +128,9 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
       SmoothStreamingManifestParser parser = new SmoothStreamingManifestParser();
       manifestFetcher = new ManifestFetcher<>(url, new DefaultHttpDataSource(userAgent, null),
           parser);
+
+      this.proxyHost = proxyHost;
+      this.proxyPort = proxyPort;
     }
 
     public void init() {
@@ -157,7 +178,8 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
       }
 
       // Build the video renderer.
-      DataSource videoDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+      DataSource videoDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+              false, proxyHost, proxyPort);
       ChunkSource videoChunkSource = new SmoothStreamingChunkSource(manifestFetcher,
           DefaultSmoothStreamingTrackSelector.newVideoInstance(context, true, false),
           videoDataSource, new AdaptiveEvaluator(bandwidthMeter), LIVE_EDGE_LATENCY_MS);
@@ -169,7 +191,8 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
           drmSessionManager, true, mainHandler, player, 50);
 
       // Build the audio renderer.
-      DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+      DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+              false, proxyHost, proxyPort);
       ChunkSource audioChunkSource = new SmoothStreamingChunkSource(manifestFetcher,
           DefaultSmoothStreamingTrackSelector.newAudioInstance(),
           audioDataSource, null, LIVE_EDGE_LATENCY_MS);
@@ -181,7 +204,8 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
           AudioCapabilities.getCapabilities(context), AudioManager.STREAM_MUSIC);
 
       // Build the text renderer.
-      DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+      DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+              false, proxyHost, proxyPort);
       ChunkSource textChunkSource = new SmoothStreamingChunkSource(manifestFetcher,
           DefaultSmoothStreamingTrackSelector.newTextInstance(),
           textDataSource, null, LIVE_EDGE_LATENCY_MS);

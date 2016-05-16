@@ -65,6 +65,9 @@ public class HlsRendererBuilder implements RendererBuilder {
   private final String userAgent;
   private final String url;
 
+  private String proxyHost;
+  private int proxyPort;
+
   private AsyncRendererBuilder currentAsyncBuilder;
 
   public HlsRendererBuilder(Context context, String userAgent, String url) {
@@ -73,9 +76,18 @@ public class HlsRendererBuilder implements RendererBuilder {
     this.url = url;
   }
 
+  public HlsRendererBuilder(Context context, String userAgent, String url, String proxyHost, int proxyPort) {
+    this.context = context;
+    this.userAgent = userAgent;
+    this.url = url;
+
+    this.proxyHost = proxyHost;
+    this.proxyPort = proxyPort;
+  }
+
   @Override
   public void buildRenderers(DemoPlayer player) {
-    currentAsyncBuilder = new AsyncRendererBuilder(context, userAgent, url, player);
+    currentAsyncBuilder = new AsyncRendererBuilder(context, userAgent, url, player, proxyHost, proxyPort);
     currentAsyncBuilder.init();
   }
 
@@ -97,7 +109,11 @@ public class HlsRendererBuilder implements RendererBuilder {
 
     private boolean canceled;
 
-    public AsyncRendererBuilder(Context context, String userAgent, String url, DemoPlayer player) {
+    private String proxyHost;
+    private int proxyPort;
+
+    public AsyncRendererBuilder(Context context, String userAgent, String url, DemoPlayer player,
+            String proxyHost, int proxyPort) {
       this.context = context;
       this.userAgent = userAgent;
       this.url = url;
@@ -105,6 +121,9 @@ public class HlsRendererBuilder implements RendererBuilder {
       HlsPlaylistParser parser = new HlsPlaylistParser();
       playlistFetcher = new ManifestFetcher<>(url, new DefaultUriDataSource(context, userAgent),
           parser);
+
+      this.proxyHost = proxyHost;
+      this.proxyPort = proxyPort;
     }
 
     public void init() {
@@ -144,7 +163,8 @@ public class HlsRendererBuilder implements RendererBuilder {
       }
 
       // Build the video/id3 renderers.
-      DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+      DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+              false, proxyHost, proxyPort);
       HlsChunkSource chunkSource = new HlsChunkSource(true /* isMaster */, dataSource, url,
           manifest, DefaultHlsTrackSelector.newDefaultInstance(context), bandwidthMeter,
           timestampAdjusterProvider, HlsChunkSource.ADAPTIVE_MODE_SPLICE);
@@ -159,7 +179,8 @@ public class HlsRendererBuilder implements RendererBuilder {
       // Build the audio renderer.
       MediaCodecAudioTrackRenderer audioRenderer;
       if (haveAudios) {
-        DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+        DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+                false, proxyHost, proxyPort);
         HlsChunkSource audioChunkSource = new HlsChunkSource(false /* isMaster */, audioDataSource,
             url, manifest, DefaultHlsTrackSelector.newAudioInstance(), bandwidthMeter,
             timestampAdjusterProvider, HlsChunkSource.ADAPTIVE_MODE_SPLICE);
@@ -179,7 +200,8 @@ public class HlsRendererBuilder implements RendererBuilder {
       // Build the text renderer.
       TrackRenderer textRenderer;
       if (haveSubtitles) {
-        DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+        DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+                false, proxyHost, proxyPort);
         HlsChunkSource textChunkSource = new HlsChunkSource(false /* isMaster */, textDataSource,
             url, manifest, DefaultHlsTrackSelector.newSubtitleInstance(), bandwidthMeter,
             timestampAdjusterProvider, HlsChunkSource.ADAPTIVE_MODE_SPLICE);

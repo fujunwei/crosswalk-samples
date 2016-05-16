@@ -9,6 +9,12 @@
         android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_video" android:title="@string/load_video"
         android:orderInCategory="100" app:showAsAction="never" />
-    <item android:id="@+id/action_enableXWalk" android:title="@string/load_enableXWalk"
+    <item android:id="@+id/action_enableProxy" android:title="@string/load_enableProxy"
+        android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_disableProxy" android:title="@string/load_disableProxy"
+        android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_enableExMediaPlayer" android:title="@string/load_enableExMediaPlayer"
+        android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_disableExMediaPlayer" android:title="@string/load_disableExMediaPlayer"
         android:orderInCategory="100" app:showAsAction="never" />
 </menu>

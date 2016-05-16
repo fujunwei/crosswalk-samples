@@ -48,10 +48,23 @@ public class ExtractorRendererBuilder implements RendererBuilder {
   private final String userAgent;
   private final Uri uri;
 
+  private String proxyHost;
+  private int proxyPort;
+
   public ExtractorRendererBuilder(Context context, String userAgent, Uri uri) {
     this.context = context;
     this.userAgent = userAgent;
     this.uri = uri;
+  }
+
+  public ExtractorRendererBuilder(Context context, String userAgent, Uri uri,
+                                  String proxyHost, int proxyPort) {
+    this.context = context;
+    this.userAgent = userAgent;
+    this.uri = uri;
+
+    this.proxyHost = proxyHost;
+    this.proxyPort = proxyPort;
   }
 
   @Override
@@ -61,7 +74,8 @@ public class ExtractorRendererBuilder implements RendererBuilder {
 
     // Build the video and audio renderers.
     DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter(mainHandler, null);
-    DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+    DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+            false, proxyHost, proxyPort);
     ExtractorSampleSource sampleSource = new ExtractorSampleSource(uri, dataSource, allocator,
         BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE, mainHandler, player, 0);
     MediaCodecVideoTrackRenderer videoRenderer = new MediaCodecVideoTrackRenderer(context,

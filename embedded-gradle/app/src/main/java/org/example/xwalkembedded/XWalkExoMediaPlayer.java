@@ -2,6 +2,8 @@ package org.example.xwalkembedded;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
@@ -75,6 +77,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     private String contentId;
     private String provider;
 
+    private String proxyHost;
+    private int proxyPort;
+
     MediaPlayer.OnBufferingUpdateListener mBufferingUpdateListener;
     MediaPlayer.OnCompletionListener mCompletionListener;
     MediaPlayer.OnPreparedListener mPreparedListener;
@@ -90,18 +95,25 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 //        mExoMediaPlayer = new ExoMediaPlayer(context);
     }
 
+    public void updateProxySetting(String host, int port) {
+        proxyHost = host;
+        proxyPort = port;
+    }
+
     @Override
     public void prepareAsync() {
         Log.d(TAG, "==== in prepareAsync ");
 //        mExoMediaPlayer.prepareAsync();
+        preparePlayer(true);
     }
 
     @Override
     public void setSurface(Surface surface) {
         Log.d(TAG, "==== in setSurface ");
 //        mExoMediaPlayer.setSurface(surface);
-        player.setSurface(mSurfaceView.getHolder().getSurface());
-        mXWalkView.setVisibility(View.GONE);
+
+        player.setSurface(surface);//mSurfaceView.getHolder().getSurface()
+
         mVideoSizeChangedListener.onVideoSizeChanged(null, 640, 360);
 
         player.setSelectedTrack(0, ExoPlayer.TRACK_DEFAULT);
@@ -115,7 +127,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         contentType = inferContentType(contentUri, "");
         contentId = "Demo Testing".toLowerCase(Locale.US).replaceAll("\\s", "");
         provider = "";
-        preparePlayer(true);
+
+//        new PrebufferData(uri.toString());
     }
 
 //    @Override
@@ -194,6 +207,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void seekTo(int msec) {
         Log.d(TAG, "==== in seekTo ");
 //        mExoMediaPlayer.seekTo(msec);
+        player.seekTo(msec);
     }
 
     @Override
@@ -258,14 +272,16 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         switch (contentType) {
             case Util.TYPE_SS:
                 return new SmoothStreamingRendererBuilder(mContext, userAgent, contentUri.toString(),
-                        new SmoothStreamingTestMediaDrmCallback());
+                        new SmoothStreamingTestMediaDrmCallback(), proxyHost, proxyPort);
             case Util.TYPE_DASH:
                 return new DashRendererBuilder(mContext, userAgent, contentUri.toString(),
-                        new WidevineTestMediaDrmCallback(contentId, provider));
+                        new WidevineTestMediaDrmCallback(contentId, provider), proxyHost, proxyPort);
             case Util.TYPE_HLS:
-                return new HlsRendererBuilder(mContext, userAgent, contentUri.toString());
+                return new HlsRendererBuilder(mContext, userAgent, contentUri.toString(),
+                        proxyHost, proxyPort);
             case Util.TYPE_OTHER:
-                return new ExtractorRendererBuilder(mContext, userAgent, contentUri);
+                return new ExtractorRendererBuilder(mContext, userAgent, contentUri,
+                        proxyHost, proxyPort);
             default:
                 throw new IllegalStateException("Unsupported type: " + contentType);
         }
