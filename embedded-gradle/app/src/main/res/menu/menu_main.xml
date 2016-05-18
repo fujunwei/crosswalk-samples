@@ -13,8 +13,4 @@
         android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_disableProxy" android:title="@string/load_disableProxy"
         android:orderInCategory="100" app:showAsAction="never" />
-    <item android:id="@+id/action_enableExMediaPlayer" android:title="@string/load_enableExMediaPlayer"
-        android:orderInCategory="100" app:showAsAction="never" />
-    <item android:id="@+id/action_disableExMediaPlayer" android:title="@string/load_disableExMediaPlayer"
-        android:orderInCategory="100" app:showAsAction="never" />
 </menu>

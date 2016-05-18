@@ -131,7 +131,8 @@ public class XWalkWebViewActivity extends AppCompatActivity {
 //                e.printStackTrace();
 //            }
             String[] a = {"*.intel.com", "*.intel2.com"};
-//            mXWalkView.proxySettingsChanged("122.96.25.242", 9396, "", a);
+//            mXWalkView.proxySettingsChanged("122.96.25.242", 9399, "", a);
+            mXWalkView.proxySettingsChanged("140.207.47.119", 10010, "", a);
             mXWalkView.load("file:///android_asset/index.html", null);
         } else if (id == R.id.action_video) {
 //            if (mProxy == null) {
@@ -151,13 +152,11 @@ public class XWalkWebViewActivity extends AppCompatActivity {
             //http://120.52.73.7/103.38.59.16/youku/6572A850BE73078284C1F593A/03002001005721B16ECE05003E88037E969A53-228F-72D7-A8C5-B434E9A4547F.mp4
             playWithExoPlayer(Uri.parse("http://101.227.216.142/vhot2.qqvideo.tc.qq.com/j0199q9hom4.mp4?vkey=7086CFBEFB7DFD27C61719C7000DB9B78B8DBECC336B74D4DC36C4AB018CB2B569AE533D79FFCA0D6C79AA0CA0B51C6ABB5235A1BC46D39910ED1AE4B36A70C1B6634E18EC59E7B3BFCE1708631C8D10458ABEED44DFCA8A&br=60&platform=2&fmt=auto&level=0&sdtfrom=v5010&locid=67551d9a-bf0d-4b25-bfc8-b2ee2334f02e&size=4580061&ocid=256578988"));
         } else if (id == R.id.action_enableProxy) {
+//            mXWalkExoMediaPlayer.updateProxySetting("122.96.25.242", 9399);
             mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
         } else if (id == R.id.action_disableProxy) {
             mXWalkExoMediaPlayer.updateProxySetting("", -1);
-        } else if (id == R.id.action_enableExMediaPlayer) {
-            mXWalkView.setExMediaPlayer(mXWalkExoMediaPlayer);
-        } else if (id == R.id.action_disableExMediaPlayer) {
-            mXWalkView.setExMediaPlayer(null);
+//            mXWalkView.setVisibility(View.INVISIBLE);
         }
 
         return super.onOptionsItemSelected(item);
