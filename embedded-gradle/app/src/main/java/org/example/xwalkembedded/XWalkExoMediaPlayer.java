@@ -35,8 +35,6 @@ import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.MediaCodecTrackRenderer;
 import com.google.android.exoplayer.MediaCodecUtil;
 import com.google.android.exoplayer.MediaFormat;
-import com.google.android.exoplayer.audio.AudioCapabilities;
-import com.google.android.exoplayer.audio.AudioCapabilitiesReceiver;
 import com.google.android.exoplayer.drm.UnsupportedDrmException;
 import com.google.android.exoplayer.metadata.id3.GeobFrame;
 import com.google.android.exoplayer.metadata.id3.Id3Frame;
@@ -59,18 +57,17 @@ import java.util.Map;
  * Created by fujunwei on 16-5-11.
  */
 public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHolder.Callback,
-        DemoPlayer.Listener, DemoPlayer.CaptionListener, DemoPlayer.Id3MetadataListener,
-        AudioCapabilitiesReceiver.Listener {
+        DemoPlayer.Listener, DemoPlayer.Id3MetadataListener{
     static final String TAG = "ExoMediaPlayer";
     private static final int MENU_GROUP_TRACKS = 1;
     private static final int ID_OFFSET = 2;
     private Context mContext;
-//    private ExoMediaPlayer mExoMediaPlayer;
 
     private DemoPlayer player;
     //    private DebugTextViewHelper debugViewHelper;
     private boolean playerNeedsPrepare;
-    private long playerPosition;
+    private EventLogger eventLogger;
+    private DebugTextViewHelper debugViewHelper;
 
     private Uri contentUri;
     private int contentType;
@@ -85,14 +82,19 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     MediaPlayer.OnPreparedListener mPreparedListener;
     MediaPlayer.OnSeekCompleteListener mSeekCompleteListener;
     MediaPlayer.OnVideoSizeChangedListener mVideoSizeChangedListener;
+    MediaPlayer.OnErrorListener mErrorListener;
 
     SurfaceView mSurfaceView;
     XWalkView mXWalkView;
+
+    private int mBufferedPercentage;
+    private int mVideoWidth;
+    private int mVideoHeight;
+
     public XWalkExoMediaPlayer(Context context, XWalkView xWalkView, SurfaceView surfaceView) {
         mContext = context;
         mXWalkView = xWalkView;
         mSurfaceView = surfaceView;
-//        mExoMediaPlayer = new ExoMediaPlayer(context);
     }
 
     public void updateProxySetting(String host, int port) {
@@ -103,25 +105,18 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public void prepareAsync() {
         Log.d(TAG, "==== in prepareAsync ");
-//        mExoMediaPlayer.prepareAsync();
         preparePlayer(true);
     }
 
     @Override
     public void setSurface(Surface surface) {
         Log.d(TAG, "==== in setSurface ");
-//        mExoMediaPlayer.setSurface(surface);
 
         player.setSurface(surface);//mSurfaceView.getHolder().getSurface()
-
-        mVideoSizeChangedListener.onVideoSizeChanged(null, 640, 360);
-
-        player.setSelectedTrack(0, ExoPlayer.TRACK_DEFAULT);
     }
 
     @Override
     public void setDataSource(Context context, Uri uri, Map<String, String> headers) {
-        // super.setDataSource(context, uri, headers);
         Log.d(TAG, "==== in setDataSource ");
         contentUri = uri;//Uri.parse("http://122.96.25.242:8088/war.mp4");//uri;
         contentType = inferContentType(contentUri, "");
@@ -144,125 +139,101 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public boolean isPlaying() {
         Log.d(TAG, "==== in isPlaying ");
-//        return mExoMediaPlayer.isPlaying();
         return player == null ? false : player.isPlaying();
     }
 
     @Override
     public int getVideoWidth() {
         Log.d(TAG, "==== in getVideoWidth ");
-//        return mExoMediaPlayer.getVideoWidth();
-        return 0;
+        return mVideoWidth;
     }
 
     @Override
     public int getVideoHeight() {
         Log.d(TAG, "==== in getVideoHeight ");
-//        return mExoMediaPlayer.getVideoHeight();
-        return 0;
+        return mVideoHeight;
     }
 
     @Override
     public int getCurrentPosition() {
-        Log.d(TAG, "==== in getCurrentPosition ");
-//        return mExoMediaPlayer.getCurrentPosition();
-        mBufferingUpdateListener.onBufferingUpdate(null, player.getBufferedPercentage());
+//        Log.d(TAG, "==== in getCurrentPosition " + player.getBufferedPercentage());
+        if (mBufferedPercentage != player.getBufferedPercentage()) {
+            mBufferedPercentage = player.getBufferedPercentage();
+            mBufferingUpdateListener.onBufferingUpdate(null, mBufferedPercentage);
+        }
         return (int) player.getCurrentPosition();
     }
 
     @Override
     public int getDuration() {
         Log.d(TAG, "==== in getDuration ");
-//        return mExoMediaPlayer.getDuration();
         return (int) player.getDuration();
     }
 
     @Override
     public void release() {
         Log.d(TAG, "==== in release ");
-//        mExoMediaPlayer.release();
         releasePlayer();
     }
 
     @Override
     public void setVolume(float volume1, float volume2) {
         Log.d(TAG, "==== in setVolume ");
-//        mExoMediaPlayer.setVolume(volume1, volume2);
     }
 
     @Override
     public void start() {
         Log.d(TAG, "==== in start ");
-//        mExoMediaPlayer.start();
         player.setPlayWhenReady(true);
     }
 
     @Override
     public void pause() {
         Log.d(TAG, "==== in pause ");
-//        mExoMediaPlayer.pause();
+        player.setPlayWhenReady(false);
     }
 
     @Override
     public void seekTo(int msec) {
         Log.d(TAG, "==== in seekTo ");
-//        mExoMediaPlayer.seekTo(msec);
         player.seekTo(msec);
+        mSeekCompleteListener.onSeekComplete(null);
     }
 
     @Override
     public void setOnBufferingUpdateListener(MediaPlayer.OnBufferingUpdateListener listener) {
         Log.d(TAG, "==== in setOnBufferingUpdateListener ");
-//        mExoMediaPlayer.setOnBufferingUpdateListener(listener);
         mBufferingUpdateListener = listener;
     }
 
     @Override
     public void setOnCompletionListener(MediaPlayer.OnCompletionListener listener) {
         Log.d(TAG, "==== in setOnCompletionListener ");
-//        mExoMediaPlayer.setOnCompletionListener(listener);
         mCompletionListener = listener;
     }
 
     @Override
     public void setOnErrorListener(MediaPlayer.OnErrorListener listener) {
         Log.d(TAG, "==== in setOnErrorListener ");
-//        mExoMediaPlayer.setOnErrorListener(listener);
+        mErrorListener = listener;
     }
 
     @Override
     public void setOnPreparedListener(MediaPlayer.OnPreparedListener listener) {
         Log.d(TAG, "==== in setOnPreparedListener ");
-//        mExoMediaPlayer.setOnPreparedListener(listener);
         mPreparedListener = listener;
     }
 
     @Override
     public void setOnSeekCompleteListener(MediaPlayer.OnSeekCompleteListener listener) {
         Log.d(TAG, "==== in setOnSeekCompleteListener ");
-//        mExoMediaPlayer.setOnSeekCompleteListener(listener);
         mSeekCompleteListener = listener;
     }
 
     @Override
     public void setOnVideoSizeChangedListener(MediaPlayer.OnVideoSizeChangedListener listener) {
         Log.d(TAG, "==== in setOnVideoSizeChangedListener ");
-//        mExoMediaPlayer.setOnVideoSizeChangedListener(listener);
         mVideoSizeChangedListener = listener;
-    }
-
-    // AudioCapabilitiesReceiver.Listener methods
-
-    @Override
-    public void onAudioCapabilitiesChanged(AudioCapabilities audioCapabilities) {
-        if (player == null) {
-            return;
-        }
-        boolean backgrounded = player.getBackgrounded();
-        boolean playWhenReady = player.getPlayWhenReady();
-        releasePlayer();
-        preparePlayer(playWhenReady);
-        player.setBackgrounded(backgrounded);
     }
 
     // Internal methods
@@ -287,42 +258,37 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         }
     }
 
-    private void preparePlayer(boolean playWhenReady) {
+    public void preparePlayer(boolean playWhenReady) {
         if (player == null) {
             player = new DemoPlayer(getRendererBuilder());
             player.addListener(this);
-            player.setCaptionListener(this);
             player.setMetadataListener(this);
-//            player.seekTo(playerPosition);
             playerNeedsPrepare = true;
-//            mediaController.setMediaPlayer(player.getPlayerControl());
-//            mediaController.setEnabled(true);
-//            eventLogger = new EventLogger();
-//            eventLogger.startSession();
-//            player.addListener(eventLogger);
-//            player.setInfoListener(eventLogger);
-//            player.setInternalErrorListener(eventLogger);
+            eventLogger = new EventLogger();
+            eventLogger.startSession();
+            player.addListener(eventLogger);
+            player.setInfoListener(eventLogger);
+            player.setInternalErrorListener(eventLogger);
 //            debugViewHelper = new DebugTextViewHelper(player, debugTextView);
 //            debugViewHelper.start();
         }
         if (playerNeedsPrepare) {
             player.prepare();
             playerNeedsPrepare = false;
-            updateButtonVisibilities();
         }
 //        player.setSurface(surfaceView.getHolder().getSurface());
         player.setPlayWhenReady(playWhenReady);
     }
 
-    private void releasePlayer() {
+    public void releasePlayer() {
         if (player != null) {
 //            debugViewHelper.stop();
 //            debugViewHelper = null;
-            playerPosition = player.getCurrentPosition();
             player.release();
             player = null;
-//            eventLogger.endSession();
-//            eventLogger = null;
+            eventLogger.endSession();
+            eventLogger = null;
+            mBufferedPercentage = 0;
         }
     }
 
@@ -330,9 +296,6 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     @Override
     public void onStateChanged(boolean playWhenReady, int playbackState) {
-        if (playbackState == ExoPlayer.STATE_ENDED) {
-            showControls();
-        }
         String text = "playWhenReady=" + playWhenReady + ", playbackState=";
         switch(playbackState) {
             case ExoPlayer.STATE_BUFFERING:
@@ -348,11 +311,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
                 break;
             case ExoPlayer.STATE_PREPARING:
                 text += "preparing";
-                mBufferingUpdateListener.onBufferingUpdate(null, player.getBufferedPercentage());
                 break;
             case ExoPlayer.STATE_READY:
                 text += "ready";
-//                mSeekCompleteListener.onSeekComplete(null);
                 mPreparedListener.onPrepared(null);
                 break;
             default:
@@ -360,12 +321,11 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
                 break;
         }
         Log.d(TAG, "====onStateChanged " + text);
-//        playerStateTextView.setText(text);
-        updateButtonVisibilities();
     }
 
     @Override
     public void onError(Exception e) {
+        Log.d(TAG, "====onError ");
         String errorString = null;
         if (e instanceof UnsupportedDrmException) {
             // Special case DRM failures.
@@ -397,190 +357,17 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             Toast.makeText(mContext.getApplicationContext(), errorString, Toast.LENGTH_LONG).show();
         }
         playerNeedsPrepare = true;
-        updateButtonVisibilities();
-        showControls();
+
+        mErrorListener.onError(null, MediaPlayer.MEDIA_ERROR_UNKNOWN, MediaPlayer.MEDIA_ERROR_UNSUPPORTED);
     }
 
     @Override
     public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees,
                                    float pixelWidthAspectRatio) {
         Log.d(TAG, "==== onVideoSizeChanged " + width + " " + height);
+        mVideoWidth = width;
+        mVideoHeight = height;
         mVideoSizeChangedListener.onVideoSizeChanged(null, width, height);
-//        shutterView.setVisibility(View.GONE);
-//        videoFrame.setAspectRatio(
-//                height == 0 ? 1 : (width * pixelWidthAspectRatio) / height);
-    }
-
-    // User controls
-
-    private void updateButtonVisibilities() {
-//        retryButton.setVisibility(playerNeedsPrepare ? View.VISIBLE : View.GONE);
-//        videoButton.setVisibility(haveTracks(DemoPlayer.TYPE_VIDEO) ? View.VISIBLE : View.GONE);
-//        audioButton.setVisibility(haveTracks(DemoPlayer.TYPE_AUDIO) ? View.VISIBLE : View.GONE);
-//        textButton.setVisibility(haveTracks(DemoPlayer.TYPE_TEXT) ? View.VISIBLE : View.GONE);
-    }
-
-    private boolean haveTracks(int type) {
-        return player != null && player.getTrackCount(type) > 0;
-    }
-
-    public void showVideoPopup(View v) {
-        PopupMenu popup = new PopupMenu(mContext, v);
-        configurePopupWithTracks(popup, null, DemoPlayer.TYPE_VIDEO);
-        popup.show();
-    }
-
-    public void showAudioPopup(View v) {
-        PopupMenu popup = new PopupMenu(mContext, v);
-        Menu menu = popup.getMenu();
-        menu.add(Menu.NONE, Menu.NONE, Menu.NONE, R.string.enable_background_audio);
-        final MenuItem backgroundAudioItem = menu.findItem(0);
-        backgroundAudioItem.setCheckable(true);
-//        backgroundAudioItem.setChecked(enableBackgroundAudio);
-        PopupMenu.OnMenuItemClickListener clickListener = new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if (item == backgroundAudioItem) {
-//                    enableBackgroundAudio = !item.isChecked();
-                    return true;
-                }
-                return false;
-            }
-        };
-        configurePopupWithTracks(popup, clickListener, DemoPlayer.TYPE_AUDIO);
-        popup.show();
-    }
-
-    public void showTextPopup(View v) {
-        PopupMenu popup = new PopupMenu(mContext, v);
-        configurePopupWithTracks(popup, null, DemoPlayer.TYPE_TEXT);
-        popup.show();
-    }
-
-    public void showVerboseLogPopup(View v) {
-        PopupMenu popup = new PopupMenu(mContext, v);
-        Menu menu = popup.getMenu();
-        menu.add(Menu.NONE, 0, Menu.NONE, R.string.logging_normal);
-        menu.add(Menu.NONE, 1, Menu.NONE, R.string.logging_verbose);
-        menu.setGroupCheckable(Menu.NONE, true, true);
-        menu.findItem((VerboseLogUtil.areAllTagsEnabled()) ? 1 : 0).setChecked(true);
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if (item.getItemId() == 0) {
-                    VerboseLogUtil.setEnableAllTags(false);
-                } else {
-                    VerboseLogUtil.setEnableAllTags(true);
-                }
-                return true;
-            }
-        });
-        popup.show();
-    }
-
-    private void configurePopupWithTracks(PopupMenu popup,
-                                          final PopupMenu.OnMenuItemClickListener customActionClickListener,
-                                          final int trackType) {
-        if (player == null) {
-            return;
-        }
-        int trackCount = player.getTrackCount(trackType);
-        if (trackCount == 0) {
-            return;
-        }
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                return (customActionClickListener != null
-                        && customActionClickListener.onMenuItemClick(item))
-                        || onTrackItemClick(item, trackType);
-            }
-        });
-        Menu menu = popup.getMenu();
-        // ID_OFFSET ensures we avoid clashing with Menu.NONE (which equals 0).
-        menu.add(MENU_GROUP_TRACKS, DemoPlayer.TRACK_DISABLED + ID_OFFSET, Menu.NONE, R.string.off);
-        for (int i = 0; i < trackCount; i++) {
-            menu.add(MENU_GROUP_TRACKS, i + ID_OFFSET, Menu.NONE,
-                    buildTrackName(player.getTrackFormat(trackType, i)));
-        }
-        menu.setGroupCheckable(MENU_GROUP_TRACKS, true, true);
-        menu.findItem(player.getSelectedTrack(trackType) + ID_OFFSET).setChecked(true);
-    }
-
-    private static String buildTrackName(MediaFormat format) {
-        if (format.adaptive) {
-            return "auto";
-        }
-        String trackName;
-        if (MimeTypes.isVideo(format.mimeType)) {
-            trackName = joinWithSeparator(joinWithSeparator(buildResolutionString(format),
-                    buildBitrateString(format)), buildTrackIdString(format));
-        } else if (MimeTypes.isAudio(format.mimeType)) {
-            trackName = joinWithSeparator(joinWithSeparator(joinWithSeparator(buildLanguageString(format),
-                            buildAudioPropertyString(format)), buildBitrateString(format)),
-                    buildTrackIdString(format));
-        } else {
-            trackName = joinWithSeparator(joinWithSeparator(buildLanguageString(format),
-                    buildBitrateString(format)), buildTrackIdString(format));
-        }
-        return trackName.length() == 0 ? "unknown" : trackName;
-    }
-
-    private static String buildResolutionString(MediaFormat format) {
-        return format.width == MediaFormat.NO_VALUE || format.height == MediaFormat.NO_VALUE
-                ? "" : format.width + "x" + format.height;
-    }
-
-    private static String buildAudioPropertyString(MediaFormat format) {
-        return format.channelCount == MediaFormat.NO_VALUE || format.sampleRate == MediaFormat.NO_VALUE
-                ? "" : format.channelCount + "ch, " + format.sampleRate + "Hz";
-    }
-
-    private static String buildLanguageString(MediaFormat format) {
-        return TextUtils.isEmpty(format.language) || "und".equals(format.language) ? ""
-                : format.language;
-    }
-
-    private static String buildBitrateString(MediaFormat format) {
-        return format.bitrate == MediaFormat.NO_VALUE ? ""
-                : String.format(Locale.US, "%.2fMbit", format.bitrate / 1000000f);
-    }
-
-    private static String joinWithSeparator(String first, String second) {
-        return first.length() == 0 ? second : (second.length() == 0 ? first : first + ", " + second);
-    }
-
-    private static String buildTrackIdString(MediaFormat format) {
-        return format.trackId == null ? "" : " (" + format.trackId + ")";
-    }
-
-    private boolean onTrackItemClick(MenuItem item, int type) {
-        if (player == null || item.getGroupId() != MENU_GROUP_TRACKS) {
-            return false;
-        }
-        player.setSelectedTrack(type, item.getItemId() - ID_OFFSET);
-        return true;
-    }
-
-    private void toggleControlsVisibility()  {
-//        if (mediaController.isShowing()) {
-//            mediaController.hide();
-//            debugRootView.setVisibility(View.GONE);
-//        } else {
-//            showControls();
-//        }
-    }
-
-    private void showControls() {
-//        mediaController.show(0);
-//        debugRootView.setVisibility(View.VISIBLE);
-    }
-
-    // DemoPlayer.CaptionListener implementation
-
-    @Override
-    public void onCues(List<Cue> cues) {
-//        subtitleLayout.setCues(cues);
     }
 
     // DemoPlayer.MetadataListener implementation
@@ -625,35 +412,6 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             player.blockingClearSurface();
         }
     }
-
-    private void configureSubtitleView() {
-        CaptionStyleCompat style;
-        float fontScale;
-        if (Util.SDK_INT >= 19) {
-            style = getUserCaptionStyleV19();
-            fontScale = getUserCaptionFontScaleV19();
-        } else {
-            style = CaptionStyleCompat.DEFAULT;
-            fontScale = 1.0f;
-        }
-//        subtitleLayout.setStyle(style);
-//        subtitleLayout.setFractionalTextSize(SubtitleLayout.DEFAULT_TEXT_SIZE_FRACTION * fontScale);
-    }
-
-    @TargetApi(19)
-    private float getUserCaptionFontScaleV19() {
-        CaptioningManager captioningManager =
-                (CaptioningManager) mContext.getSystemService(Context.CAPTIONING_SERVICE);
-        return captioningManager.getFontScale();
-    }
-
-    @TargetApi(19)
-    private CaptionStyleCompat getUserCaptionStyleV19() {
-        CaptioningManager captioningManager =
-                (CaptioningManager) mContext.getSystemService(Context.CAPTIONING_SERVICE);
-        return CaptionStyleCompat.createFromCaptionStyle(captioningManager.getUserStyle());
-    }
-
     /**
      * Makes a best guess to infer the type from a media {@link Uri} and an optional overriding file
      * extension.
@@ -668,40 +426,5 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         Log.e(TAG, "====Get uri content type " + lastPathSegment);
         return Util.inferContentType(lastPathSegment);
     }
-
-    private static final class KeyCompatibleMediaController extends MediaController {
-
-        private MediaController.MediaPlayerControl playerControl;
-
-        public KeyCompatibleMediaController(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void setMediaPlayer(MediaController.MediaPlayerControl playerControl) {
-            super.setMediaPlayer(playerControl);
-            this.playerControl = playerControl;
-        }
-
-        @Override
-        public boolean dispatchKeyEvent(KeyEvent event) {
-            int keyCode = event.getKeyCode();
-            if (playerControl.canSeekForward() && keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                    playerControl.seekTo(playerControl.getCurrentPosition() + 15000); // milliseconds
-                    show();
-                }
-                return true;
-            } else if (playerControl.canSeekBackward() && keyCode == KeyEvent.KEYCODE_MEDIA_REWIND) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                    playerControl.seekTo(playerControl.getCurrentPosition() - 5000); // milliseconds
-                    show();
-                }
-                return true;
-            }
-            return super.dispatchKeyEvent(event);
-        }
-    }
-
 
 }

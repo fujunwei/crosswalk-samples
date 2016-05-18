@@ -340,7 +340,7 @@ public class DemoPlayer implements ExoPlayer.Listener, ChunkSampleSource.EventLi
   }
 
   public boolean isPlaying() {
-    return player.isPlayWhenReadyCommitted();
+    return player.getPlayWhenReady();
   }
 
   public void seekTo(long positionMs) {
@@ -554,7 +554,7 @@ public class DemoPlayer implements ExoPlayer.Listener, ChunkSampleSource.EventLi
       long mediaStartTimeMs, long mediaEndTimeMs) {
     if (infoListener != null) {
       infoListener.onLoadStarted(sourceId, length, type, trigger, format, mediaStartTimeMs,
-          mediaEndTimeMs);
+              mediaEndTimeMs);
     }
   }
 

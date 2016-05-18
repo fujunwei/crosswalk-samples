@@ -38,9 +38,11 @@ import java.util.Locale;
 import android.util.ArrayMap;
 import android.widget.VideoView;
 
+import com.google.android.exoplayer.audio.AudioCapabilities;
+import com.google.android.exoplayer.audio.AudioCapabilitiesReceiver;
 import com.google.android.exoplayer.util.Util;
 
-public class XWalkWebViewActivity extends AppCompatActivity {
+public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapabilitiesReceiver.Listener {
     private XWalkView mXWalkView;
     final static  String TAG = "fujunwei";
     private StreamProxy mProxy;
@@ -49,6 +51,7 @@ public class XWalkWebViewActivity extends AppCompatActivity {
     private SurfaceView surfaceView;
     private XWalkExoMediaPlayer mXWalkExoMediaPlayer;
 
+    private AudioCapabilitiesReceiver audioCapabilitiesReceiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -169,6 +172,15 @@ public class XWalkWebViewActivity extends AppCompatActivity {
                 .putExtra(PlayerActivity.CONTENT_TYPE_EXTRA, Util.TYPE_OTHER) //sample.type
                 .putExtra(PlayerActivity.PROVIDER_EXTRA, ""); //sample.provider
         startActivity(mpdIntent);
+    }
+
+
+    // AudioCapabilitiesReceiver.Listener methods
+
+    @Override
+    public void onAudioCapabilitiesChanged(AudioCapabilities audioCapabilities) {
+        mXWalkExoMediaPlayer.releasePlayer();
+        mXWalkExoMediaPlayer.preparePlayer(true);
     }
 
     // from https://stackoverflow.com/questions/19979578/android-webview-set-proxy-programatically-kitkat
