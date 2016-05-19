@@ -49,7 +49,7 @@ import android.util.Log;
  *
  */
 public class Utils {
-	private static final String TAG="com.proxy.utils";
+	private static final String TAG="Utils";
 	
 	/**
 	 * 获取重定向后的URL，即真正有效的链接

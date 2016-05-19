@@ -168,11 +168,11 @@ public class HttpGetProxy{
 		URI originalURI = URI.create(mMediaUrl);
 		remoteHost = originalURI.getHost();
 		if (originalURI.getPort() != -1) {// URL带Port
-			serverAddress = new InetSocketAddress(remoteHost, originalURI.getPort());// 使用默认端口
+//			serverAddress = new InetSocketAddress(remoteHost, originalURI.getPort());// 使用默认端口
 			remotePort = originalURI.getPort();// 保存端口，中转时替换
 			localUrl = mMediaUrl.replace(remoteHost + ":" + originalURI.getPort(), localHost + ":" + localPort);
 		} else {// URL不带Port
-			serverAddress = new InetSocketAddress(remoteHost, Config.HTTP_PORT);// 使用80端口
+//			serverAddress = new InetSocketAddress(remoteHost, Config.HTTP_PORT);// 使用80端口
 			remotePort = -1;
 			localUrl = mMediaUrl.replace(remoteHost, localHost + ":" + localPort);
 		}
@@ -275,7 +275,11 @@ public class HttpGetProxy{
 					}
 				}
 				Log.e(TAG, "====Read media player request body");
-
+                if (remotePort != -1) {// URL带Port
+                    serverAddress = new InetSocketAddress(remoteHost, remotePort);// 使用默认端口
+                } else {// URL不带Port
+                    serverAddress = new InetSocketAddress(remoteHost, Config.HTTP_PORT);// 使用80端口
+                }
 				utils = new HttpGetProxyUtils(sckPlayer, serverAddress);
 				boolean isExists = false;
 				if (request != null) {// MediaPlayer的request有效

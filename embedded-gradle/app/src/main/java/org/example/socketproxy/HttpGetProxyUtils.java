@@ -128,7 +128,7 @@ public class HttpGetProxyUtils {
 		Proxy proxy;
 		InetSocketAddress socketAddress = null;
 
-		socketAddress = new InetSocketAddress(InetAddress.getByName("122.96.25.242"),9100);
+		socketAddress = new InetSocketAddress(InetAddress.getByName("140.207.47.119"),10014);
 		proxy=new Proxy(Proxy.Type.SOCKS,socketAddress);
 
 		Socket sckServer = new Socket(proxy);

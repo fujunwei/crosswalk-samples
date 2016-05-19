@@ -161,7 +161,7 @@ public class StreamProxy implements Runnable {
   private HttpResponse download(String url) {
     DefaultHttpClient httpClient;
     if (true) {
-      HttpHost httpHost = new HttpHost("122.96.25.242", 9399);
+      HttpHost httpHost = new HttpHost("140.207.47.119", 10010);
       BasicHttpParams basicHttpParams = new BasicHttpParams();
       HttpConnectionParams.setStaleCheckingEnabled(basicHttpParams, false);
 
