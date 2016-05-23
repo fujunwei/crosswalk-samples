@@ -36,6 +36,8 @@ import android.media.MediaCodec;
 import android.net.Uri;
 import android.os.Handler;
 
+import java.util.Map;
+
 /**
  * A {@link RendererBuilder} for streams that can be read using an {@link Extractor}.
  */
@@ -45,22 +47,16 @@ public class ExtractorRendererBuilder implements RendererBuilder {
   private static final int BUFFER_SEGMENT_COUNT = 256;
 
   private final Context context;
-  private final String userAgent;
   private final Uri uri;
 
   private String proxyHost;
   private int proxyPort;
+  private Map<String, String> headers;
 
-  public ExtractorRendererBuilder(Context context, String userAgent, Uri uri) {
-    this.context = context;
-    this.userAgent = userAgent;
-    this.uri = uri;
-  }
-
-  public ExtractorRendererBuilder(Context context, String userAgent, Uri uri,
+  public ExtractorRendererBuilder(Context context, Map<String, String> headers, Uri uri,
                                   String proxyHost, int proxyPort) {
     this.context = context;
-    this.userAgent = userAgent;
+    this.headers = headers;
     this.uri = uri;
 
     this.proxyHost = proxyHost;
@@ -74,7 +70,7 @@ public class ExtractorRendererBuilder implements RendererBuilder {
 
     // Build the video and audio renderers.
     DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter(mainHandler, null);
-    DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+    DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, headers,
             false, proxyHost, proxyPort);
     ExtractorSampleSource sampleSource = new ExtractorSampleSource(uri, dataSource, allocator,
         BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE, mainHandler, player, 0);

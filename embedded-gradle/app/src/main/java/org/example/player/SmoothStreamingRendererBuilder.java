@@ -49,6 +49,7 @@ import android.media.MediaCodec;
 import android.os.Handler;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * A {@link RendererBuilder} for SmoothStreaming.
@@ -62,37 +63,29 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
   private static final int LIVE_EDGE_LATENCY_MS = 30000;
 
   private final Context context;
-  private final String userAgent;
   private final String url;
   private final MediaDrmCallback drmCallback;
 
   private String proxyHost;
   private int proxyPort;
+  private Map<String, String> headers;
 
   private AsyncRendererBuilder currentAsyncBuilder;
 
-  public SmoothStreamingRendererBuilder(Context context, String userAgent, String url,
-      MediaDrmCallback drmCallback) {
-    this.context = context;
-    this.userAgent = userAgent;
-    this.url = Util.toLowerInvariant(url).endsWith("/manifest") ? url : url + "/Manifest";
-    this.drmCallback = drmCallback;
-  }
-
-  public SmoothStreamingRendererBuilder(Context context, String userAgent, String url,
+  public SmoothStreamingRendererBuilder(Context context, Map<String, String> headers, String url,
       MediaDrmCallback drmCallback, String proxyHost, int proxyPort) {
     this.context = context;
-    this.userAgent = userAgent;
     this.url = Util.toLowerInvariant(url).endsWith("/manifest") ? url : url + "/Manifest";
     this.drmCallback = drmCallback;
 
     this.proxyHost = proxyHost;
     this.proxyPort = proxyPort;
+    this.headers = headers;
   }
 
   @Override
   public void buildRenderers(DemoPlayer player) {
-    currentAsyncBuilder = new AsyncRendererBuilder(context, userAgent, url, drmCallback, player,
+    currentAsyncBuilder = new AsyncRendererBuilder(context, headers, url, drmCallback, player,
             proxyHost, proxyPort);
     currentAsyncBuilder.init();
   }
@@ -109,7 +102,6 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
       implements ManifestFetcher.ManifestCallback<SmoothStreamingManifest> {
 
     private final Context context;
-    private final String userAgent;
     private final MediaDrmCallback drmCallback;
     private final DemoPlayer player;
     private final ManifestFetcher<SmoothStreamingManifest> manifestFetcher;
@@ -118,19 +110,20 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
 
     private String proxyHost;
     private int proxyPort;
+    private Map<String, String> headers;
 
-    public AsyncRendererBuilder(Context context, String userAgent, String url,
+    public AsyncRendererBuilder(Context context, Map<String, String> headers, String url,
         MediaDrmCallback drmCallback, DemoPlayer player, String proxyHost, int proxyPort) {
       this.context = context;
-      this.userAgent = userAgent;
       this.drmCallback = drmCallback;
       this.player = player;
       SmoothStreamingManifestParser parser = new SmoothStreamingManifestParser();
-      manifestFetcher = new ManifestFetcher<>(url, new DefaultHttpDataSource(userAgent, null),
+      manifestFetcher = new ManifestFetcher<>(url, new DefaultHttpDataSource(headers.get("User-Agent"), null),
           parser);
 
       this.proxyHost = proxyHost;
       this.proxyPort = proxyPort;
+      this.headers = headers;
     }
 
     public void init() {
@@ -178,7 +171,7 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
       }
 
       // Build the video renderer.
-      DataSource videoDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+      DataSource videoDataSource = new DefaultUriDataSource(context, bandwidthMeter, headers,
               false, proxyHost, proxyPort);
       ChunkSource videoChunkSource = new SmoothStreamingChunkSource(manifestFetcher,
           DefaultSmoothStreamingTrackSelector.newVideoInstance(context, true, false),
@@ -191,7 +184,7 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
           drmSessionManager, true, mainHandler, player, 50);
 
       // Build the audio renderer.
-      DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+      DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, headers,
               false, proxyHost, proxyPort);
       ChunkSource audioChunkSource = new SmoothStreamingChunkSource(manifestFetcher,
           DefaultSmoothStreamingTrackSelector.newAudioInstance(),
@@ -204,7 +197,7 @@ public class SmoothStreamingRendererBuilder implements RendererBuilder {
           AudioCapabilities.getCapabilities(context), AudioManager.STREAM_MUSIC);
 
       // Build the text renderer.
-      DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+      DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, headers,
               false, proxyHost, proxyPort);
       ChunkSource textChunkSource = new SmoothStreamingChunkSource(manifestFetcher,
           DefaultSmoothStreamingTrackSelector.newTextInstance(),

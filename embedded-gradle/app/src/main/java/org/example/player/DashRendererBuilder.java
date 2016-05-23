@@ -54,6 +54,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * A {@link RendererBuilder} for DASH.
@@ -73,27 +74,19 @@ public class DashRendererBuilder implements RendererBuilder {
   private static final int SECURITY_LEVEL_3 = 3;
 
   private final Context context;
-  private final String userAgent;
   private final String url;
   private final MediaDrmCallback drmCallback;
 
   private String proxyHost;
   private int proxyPort;
+  private Map<String, String> headers;
 
   private AsyncRendererBuilder currentAsyncBuilder;
 
-  public DashRendererBuilder(Context context, String userAgent, String url,
-      MediaDrmCallback drmCallback) {
-    this.context = context;
-    this.userAgent = userAgent;
-    this.url = url;
-    this.drmCallback = drmCallback;
-  }
-
-  public DashRendererBuilder(Context context, String userAgent, String url,
+  public DashRendererBuilder(Context context, Map<String, String> headers, String url,
                              MediaDrmCallback drmCallback, String proxyHost, int proxyPort) {
     this.context = context;
-    this.userAgent = userAgent;
+    this.headers = headers;
     this.url = url;
     this.drmCallback = drmCallback;
 
@@ -103,7 +96,7 @@ public class DashRendererBuilder implements RendererBuilder {
 
   @Override
   public void buildRenderers(DemoPlayer player) {
-    currentAsyncBuilder = new AsyncRendererBuilder(context, userAgent, url, drmCallback, player, proxyHost, proxyPort);
+    currentAsyncBuilder = new AsyncRendererBuilder(context, headers, url, drmCallback, player, proxyHost, proxyPort);
     currentAsyncBuilder.init();
   }
 
@@ -119,7 +112,7 @@ public class DashRendererBuilder implements RendererBuilder {
       implements ManifestFetcher.ManifestCallback<MediaPresentationDescription>, UtcTimingCallback {
 
     private final Context context;
-    private final String userAgent;
+    private Map<String, String> headers;
     private final MediaDrmCallback drmCallback;
     private final DemoPlayer player;
     private final ManifestFetcher<MediaPresentationDescription> manifestFetcher;
@@ -132,14 +125,14 @@ public class DashRendererBuilder implements RendererBuilder {
     private String proxyHost;
     private int proxyPort;
 
-    public AsyncRendererBuilder(Context context, String userAgent, String url,
+    public AsyncRendererBuilder(Context context, Map<String, String> headers, String url,
         MediaDrmCallback drmCallback, DemoPlayer player, String proxyHost, int proxyPort) {
       this.context = context;
-      this.userAgent = userAgent;
+      this.headers = headers;
       this.drmCallback = drmCallback;
       this.player = player;
       MediaPresentationDescriptionParser parser = new MediaPresentationDescriptionParser();
-      manifestDataSource = new DefaultUriDataSource(context, userAgent);
+      manifestDataSource = new DefaultUriDataSource(context, headers.get("User-Agent"));
       manifestFetcher = new ManifestFetcher<>(url, manifestDataSource, parser);
 
       this.proxyHost = proxyHost;
@@ -233,7 +226,7 @@ public class DashRendererBuilder implements RendererBuilder {
       }
 
       // Build the video renderer.
-      DataSource videoDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+      DataSource videoDataSource = new DefaultUriDataSource(context, bandwidthMeter, headers,
               false, proxyHost, proxyPort);
       ChunkSource videoChunkSource = new DashChunkSource(manifestFetcher,
           DefaultDashTrackSelector.newVideoInstance(context, true, filterHdContent),
@@ -247,7 +240,7 @@ public class DashRendererBuilder implements RendererBuilder {
           drmSessionManager, true, mainHandler, player, 50);
 
       // Build the audio renderer.
-      DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+      DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, headers,
               false, proxyHost, proxyPort);
       ChunkSource audioChunkSource = new DashChunkSource(manifestFetcher,
           DefaultDashTrackSelector.newAudioInstance(), audioDataSource, null, LIVE_EDGE_LATENCY_MS,
@@ -260,7 +253,7 @@ public class DashRendererBuilder implements RendererBuilder {
           AudioCapabilities.getCapabilities(context), AudioManager.STREAM_MUSIC);
 
       // Build the text renderer.
-      DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+      DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, headers,
               false, proxyHost, proxyPort);
       ChunkSource textChunkSource = new DashChunkSource(manifestFetcher,
           DefaultDashTrackSelector.newTextInstance(), textDataSource, null, LIVE_EDGE_LATENCY_MS,

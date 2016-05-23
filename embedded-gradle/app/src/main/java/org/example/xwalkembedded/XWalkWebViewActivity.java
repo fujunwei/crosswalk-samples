@@ -50,6 +50,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 
     private SurfaceView surfaceView;
     private XWalkExoMediaPlayer mXWalkExoMediaPlayer;
+    private AndroidMediaPlayer mAndroidMediaPlayer;
 
     private AudioCapabilitiesReceiver audioCapabilitiesReceiver;
     @Override
@@ -60,18 +61,17 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+//            }
+//        });
 
         mXWalkView = (XWalkView) findViewById(R.id.xwalkWebView);
         surfaceView = (SurfaceView) findViewById(R.id.surface_view);
-        mXWalkView.setResourceClient(new MyResourceClient(mXWalkView, this));
 //        mXWalkView.setUIClient(new XWalkUIClient(mXWalkView) {
 //            @Override
 //            public void onGeolocationPermissionsShowPrompt(XWalkView view, String origin,
@@ -81,9 +81,14 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
         XWalkSettings settings = mXWalkView.getSettings();
         mXWalkExoMediaPlayer = new XWalkExoMediaPlayer(this, mXWalkView, surfaceView);
         mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
+        mAndroidMediaPlayer = new AndroidMediaPlayer(this, mXWalkView, surfaceView);
+
         mXWalkView.setExMediaPlayer(mXWalkExoMediaPlayer);
 //        mXWalkView.load("http://crosswalk-project.org/", null);
         Log.d(TAG, "=====in crosswalk webview ");
+
+        audioCapabilitiesReceiver = new AudioCapabilitiesReceiver(this, this);
+        audioCapabilitiesReceiver.register();
     }
 
     @Override

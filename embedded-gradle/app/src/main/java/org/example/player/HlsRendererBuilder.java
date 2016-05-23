@@ -50,6 +50,7 @@ import android.os.Handler;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A {@link RendererBuilder} for HLS.
@@ -62,23 +63,17 @@ public class HlsRendererBuilder implements RendererBuilder {
   private static final int TEXT_BUFFER_SEGMENTS = 2;
 
   private final Context context;
-  private final String userAgent;
   private final String url;
 
   private String proxyHost;
   private int proxyPort;
+  private Map<String, String> headers;
 
   private AsyncRendererBuilder currentAsyncBuilder;
 
-  public HlsRendererBuilder(Context context, String userAgent, String url) {
+  public HlsRendererBuilder(Context context, Map<String, String> headers, String url, String proxyHost, int proxyPort) {
     this.context = context;
-    this.userAgent = userAgent;
-    this.url = url;
-  }
-
-  public HlsRendererBuilder(Context context, String userAgent, String url, String proxyHost, int proxyPort) {
-    this.context = context;
-    this.userAgent = userAgent;
+    this.headers = headers;
     this.url = url;
 
     this.proxyHost = proxyHost;
@@ -87,7 +82,7 @@ public class HlsRendererBuilder implements RendererBuilder {
 
   @Override
   public void buildRenderers(DemoPlayer player) {
-    currentAsyncBuilder = new AsyncRendererBuilder(context, userAgent, url, player, proxyHost, proxyPort);
+    currentAsyncBuilder = new AsyncRendererBuilder(context, headers, url, player, proxyHost, proxyPort);
     currentAsyncBuilder.init();
   }
 
@@ -102,7 +97,6 @@ public class HlsRendererBuilder implements RendererBuilder {
   private static final class AsyncRendererBuilder implements ManifestCallback<HlsPlaylist> {
 
     private final Context context;
-    private final String userAgent;
     private final String url;
     private final DemoPlayer player;
     private final ManifestFetcher<HlsPlaylist> playlistFetcher;
@@ -111,15 +105,16 @@ public class HlsRendererBuilder implements RendererBuilder {
 
     private String proxyHost;
     private int proxyPort;
+    private Map<String, String> headers;
 
-    public AsyncRendererBuilder(Context context, String userAgent, String url, DemoPlayer player,
+    public AsyncRendererBuilder(Context context, Map<String, String> headers, String url, DemoPlayer player,
             String proxyHost, int proxyPort) {
       this.context = context;
-      this.userAgent = userAgent;
+      this.headers = headers;
       this.url = url;
       this.player = player;
       HlsPlaylistParser parser = new HlsPlaylistParser();
-      playlistFetcher = new ManifestFetcher<>(url, new DefaultUriDataSource(context, userAgent),
+      playlistFetcher = new ManifestFetcher<>(url, new DefaultUriDataSource(context, headers.get("User-Agent")),
           parser);
 
       this.proxyHost = proxyHost;
@@ -163,7 +158,7 @@ public class HlsRendererBuilder implements RendererBuilder {
       }
 
       // Build the video/id3 renderers.
-      DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+      DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, headers,
               false, proxyHost, proxyPort);
       HlsChunkSource chunkSource = new HlsChunkSource(true /* isMaster */, dataSource, url,
           manifest, DefaultHlsTrackSelector.newDefaultInstance(context), bandwidthMeter,
@@ -179,7 +174,7 @@ public class HlsRendererBuilder implements RendererBuilder {
       // Build the audio renderer.
       MediaCodecAudioTrackRenderer audioRenderer;
       if (haveAudios) {
-        DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+        DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, headers,
                 false, proxyHost, proxyPort);
         HlsChunkSource audioChunkSource = new HlsChunkSource(false /* isMaster */, audioDataSource,
             url, manifest, DefaultHlsTrackSelector.newAudioInstance(), bandwidthMeter,
@@ -200,7 +195,7 @@ public class HlsRendererBuilder implements RendererBuilder {
       // Build the text renderer.
       TrackRenderer textRenderer;
       if (haveSubtitles) {
-        DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent,
+        DataSource textDataSource = new DefaultUriDataSource(context, bandwidthMeter, headers,
                 false, proxyHost, proxyPort);
         HlsChunkSource textChunkSource = new HlsChunkSource(false /* isMaster */, textDataSource,
             url, manifest, DefaultHlsTrackSelector.newSubtitleInstance(), bandwidthMeter,

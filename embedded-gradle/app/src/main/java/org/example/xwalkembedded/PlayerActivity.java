@@ -74,8 +74,10 @@ import android.widget.Toast;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * An activity that plays media using {@link DemoPlayer}.
@@ -326,17 +328,19 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
 
     private RendererBuilder getRendererBuilder() {
         String userAgent = Util.getUserAgent(this, "ExoPlayerDemo");
+        Map<String, String> headers = new HashMap<String, String>();
+        headers.put("User-Agent", userAgent);
         switch (contentType) {
             case Util.TYPE_SS:
-                return new SmoothStreamingRendererBuilder(this, userAgent, contentUri.toString(),
-                        new SmoothStreamingTestMediaDrmCallback());
+                return new SmoothStreamingRendererBuilder(this, headers, contentUri.toString(),
+                        new SmoothStreamingTestMediaDrmCallback(), "", -1);
             case Util.TYPE_DASH:
-                return new DashRendererBuilder(this, userAgent, contentUri.toString(),
-                        new WidevineTestMediaDrmCallback(contentId, provider));
+                return new DashRendererBuilder(this, headers, contentUri.toString(),
+                        new WidevineTestMediaDrmCallback(contentId, provider), "", -1);
             case Util.TYPE_HLS:
-                return new HlsRendererBuilder(this, userAgent, contentUri.toString());
+                return new HlsRendererBuilder(this, headers, contentUri.toString(), "", -1);
             case Util.TYPE_OTHER:
-                return new ExtractorRendererBuilder(this, userAgent, contentUri);
+                return new ExtractorRendererBuilder(this, headers, contentUri, "", -1);
             default:
                 throw new IllegalStateException("Unsupported type: " + contentType);
         }
