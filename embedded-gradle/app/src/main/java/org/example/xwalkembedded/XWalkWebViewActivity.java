@@ -90,10 +90,15 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
         XWalkSettings settings = mXWalkView.getSettings();
         mXWalkExoMediaPlayer = new XWalkExoMediaPlayer(this, mXWalkView);
         mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
+        String[] a = {"*.intel.com", "*.intel2.com"};
+//            mXWalkView.proxySettingsChanged("122.96.25.242", 9399, "", a);
+        mXWalkView.proxySettingsChanged("140.207.47.119", 10010, "", a);
+
         mAndroidMediaPlayer = new AndroidMediaPlayer(this, mXWalkView, surfaceView);
 
         mXWalkView.setExMediaPlayer(mXWalkExoMediaPlayer);
 //        mXWalkView.load("http://crosswalk-project.org/", null);
+        mXWalkView.load("file:///android_asset/index.html", null);
         Log.d(TAG, "=====in crosswalk webview ");
 
         audioCapabilitiesReceiver = new AudioCapabilitiesReceiver(this, this);
@@ -154,10 +159,6 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 //                // TODO Auto-generated catch block
 //                e.printStackTrace();
 //            }
-            String[] a = {"*.intel.com", "*.intel2.com"};
-//            mXWalkView.proxySettingsChanged("122.96.25.242", 9399, "", a);
-            mXWalkView.proxySettingsChanged("140.207.47.119", 10010, "", a);
-            mXWalkView.load("file:///android_asset/index.html", null);
         } else if (id == R.id.action_video) {
 //            if (mProxy == null) {
 //                mProxy = new StreamProxy();

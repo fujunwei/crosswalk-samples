@@ -218,6 +218,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
         if (!mCustomFullscreen) {
             onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            player.setSurface(mSurfaceView.getHolder().getSurface());
             mCustomFullscreen = true;
         }
     }
@@ -320,7 +321,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             player.prepare();
             playerNeedsPrepare = false;
         }
-//        player.setSurface(mSurfaceView.getHolder().getSurface());
+        player.setSurface(mSurfaceView.getHolder().getSurface());
         player.setPlayWhenReady(playWhenReady);
     }
 
@@ -525,8 +526,6 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             mPreOrientation = orientation;
             activity.setRequestedOrientation(requestedOrientation);
         }
-
-        player.setSurface(mSurfaceView.getHolder().getSurface());
     }
 
     /**
