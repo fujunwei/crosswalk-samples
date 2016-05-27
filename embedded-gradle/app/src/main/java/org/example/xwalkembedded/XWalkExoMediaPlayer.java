@@ -1,12 +1,15 @@
 package org.example.xwalkembedded;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,7 +28,9 @@ import android.media.MediaPlayer;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.accessibility.CaptioningManager;
+import android.widget.FrameLayout;
 import android.widget.MediaController;
 import android.widget.PopupMenu;
 import android.widget.Toast;
@@ -89,17 +94,22 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     MediaPlayer.OnErrorListener mErrorListener;
 
     SurfaceView mSurfaceView;
+    Surface xwalkSurface;
     XWalkView mXWalkView;
+    private final int INVALID_ORIENTATION = -2;
+    private int mPreOrientation = INVALID_ORIENTATION;
+    boolean mCustomFullscreen;
 
     private int mBufferedPercentage;
     private int mVideoWidth;
     private int mVideoHeight;
     Map<String, String> mHeaders;
 
-    public XWalkExoMediaPlayer(Context context, XWalkView xWalkView, SurfaceView surfaceView) {
+    public XWalkExoMediaPlayer(Context context, XWalkView xWalkView) {
         mContext = context;
         mXWalkView = xWalkView;
-        mSurfaceView = surfaceView;
+        mSurfaceView = new SurfaceView(context);
+        mCustomFullscreen = false;
     }
 
     public void updateProxySetting(String host, int port) {
@@ -111,16 +121,30 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void prepareAsync() {
         Log.d(TAG, "==== in prepareAsync ");
         preparePlayer(true);
+
+        // Default is custom full screen
+        if (!mCustomFullscreen) {
+            onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            mCustomFullscreen = true;
+        }
     }
 
     @Override
     public void setSurface(Surface surface) {
         Log.d(TAG, "==== in setSurface ");
-        if (surface == null) {
-            Log.e(TAG, "==== Surface is null");
-            return;
-        }
-        player.setSurface(surface);//mSurfaceView.getHolder().getSurface()
+//        if (surface == null) {
+//            Log.d(TAG, "==== surface destroy");
+//            player.setBackgrounded(true);
+//            mCustomFullscreen = false;
+//            return;
+//        }
+//
+//        // System Full screen
+//        if (!mCustomFullscreen) {
+//            player.setBackgrounded(false);
+//            player.setSurface(surface);//mSurfaceView.getHolder().getSurface()
+//        }
+//        xwalkSurface = surface;
     }
 
     @Override
@@ -144,19 +168,19 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     @Override
     public boolean isPlaying() {
-        Log.d(TAG, "==== in isPlaying ");
+        Log.d(TAG, "==== in isPlaying " + (player == null ? false : player.isPlaying()));
         return player == null ? false : player.isPlaying();
     }
 
     @Override
     public int getVideoWidth() {
-        Log.d(TAG, "==== in getVideoWidth ");
+        Log.d(TAG, "==== in getVideoWidth " + mVideoWidth);
         return mVideoWidth;
     }
 
     @Override
     public int getVideoHeight() {
-        Log.d(TAG, "==== in getVideoHeight ");
+        Log.d(TAG, "==== in getVideoHeight " + mVideoHeight);
         return mVideoHeight;
     }
 
@@ -172,7 +196,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     @Override
     public int getDuration() {
-        Log.d(TAG, "==== in getDuration ");
+        Log.d(TAG, "==== in getDuration " + (int) player.getDuration());
         return (int) player.getDuration();
     }
 
@@ -191,6 +215,11 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void start() {
         Log.d(TAG, "==== in start ");
         player.setPlayWhenReady(true);
+
+        if (!mCustomFullscreen) {
+            onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            mCustomFullscreen = true;
+        }
     }
 
     @Override
@@ -291,7 +320,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             player.prepare();
             playerNeedsPrepare = false;
         }
-//        player.setSurface(surfaceView.getHolder().getSurface());
+//        player.setSurface(mSurfaceView.getHolder().getSurface());
         player.setPlayWhenReady(playWhenReady);
     }
 
@@ -440,6 +469,94 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
                 : uri.getLastPathSegment();
         Log.e(TAG, "====Get uri content type " + lastPathSegment);
         return Util.inferContentType(lastPathSegment);
+    }
+
+    /**
+     * Get the current activity passed from callers. It's never null.
+     * @return the activity instance passed from callers.
+     *
+     * @hide
+     */
+    public Activity getActivity() {
+        if (mContext instanceof Activity) {
+            return (Activity) mContext;
+        }
+
+        // Never achieve here.
+        assert(false);
+        return null;
+    }
+
+    private Activity addContentView(View view) {
+        XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
+
+        if (activity != null) {
+            activity.onFullscreenToggled(true);
+        }
+
+        // Add the video view to the activity's DecorView.
+        FrameLayout decor = (FrameLayout) activity.getWindow().getDecorView();
+        decor.addView(view, 0,
+                new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        Gravity.CENTER));
+        return activity;
+    }
+
+    /**
+     * Notify the host application that the current page would
+     * like to show a custom View in a particular orientation.
+     * @param view is the View object to be shown.
+     * @param requestedOrientation An orientation constant as used in
+     * {@link ActivityInfo#screenOrientation ActivityInfo.screenOrientation}.
+     * @param callback is the callback to be invoked if and when the view
+     * is dismissed.
+     */
+    public void onShowCustomView(int requestedOrientation) {
+        Activity activity = addContentView(mSurfaceView);
+        if (activity == null) return;
+
+        final int orientation = activity.getResources().getConfiguration().orientation;
+
+        if (requestedOrientation != orientation &&
+                requestedOrientation >= ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED &&
+                requestedOrientation <= ActivityInfo.SCREEN_ORIENTATION_LOCKED) {
+            mPreOrientation = orientation;
+            activity.setRequestedOrientation(requestedOrientation);
+        }
+
+        player.setSurface(mSurfaceView.getHolder().getSurface());
+    }
+
+    /**
+     * Notify the host application that the current page would
+     * like to hide its custom view.
+     */
+    public void onHideCustomView() {
+        XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
+
+        player.setBackgrounded(true);
+        mCustomFullscreen = false;
+
+        if (activity != null) {
+            activity.onFullscreenToggled(false);
+        }
+
+        // Remove video view from activity's ContentView.
+        FrameLayout decor = (FrameLayout) activity.getWindow().getDecorView();
+        decor.removeView(mSurfaceView);
+
+        if (mPreOrientation != INVALID_ORIENTATION &&
+                mPreOrientation >= ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED &&
+                mPreOrientation <= ActivityInfo.SCREEN_ORIENTATION_LOCKED) {
+            activity.setRequestedOrientation(mPreOrientation);
+            mPreOrientation = INVALID_ORIENTATION;
+        }
+
+//        player.setSurface(xwalkSurface);
+        player.setBackgrounded(false);
+        player.setPlayWhenReady(false);
     }
 
 }

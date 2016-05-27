@@ -13,11 +13,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.os.Parcelable;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceView;
@@ -36,6 +38,7 @@ import java.lang.reflect.Method;
 import java.util.Locale;
 
 import android.util.ArrayMap;
+import android.view.WindowManager;
 import android.widget.VideoView;
 
 import com.google.android.exoplayer.audio.AudioCapabilities;
@@ -53,6 +56,12 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
     private AndroidMediaPlayer mAndroidMediaPlayer;
 
     private AudioCapabilitiesReceiver audioCapabilitiesReceiver;
+
+    private int mSystemUiFlag;
+    private View mDecorView;
+    private boolean mOriginalFullscreen;
+    private boolean mOriginalForceNotFullscreen;
+    private boolean mIsFullscreen = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,7 +88,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 //            }
 //        });
         XWalkSettings settings = mXWalkView.getSettings();
-        mXWalkExoMediaPlayer = new XWalkExoMediaPlayer(this, mXWalkView, surfaceView);
+        mXWalkExoMediaPlayer = new XWalkExoMediaPlayer(this, mXWalkView);
         mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
         mAndroidMediaPlayer = new AndroidMediaPlayer(this, mXWalkView, surfaceView);
 
@@ -89,6 +98,13 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 
         audioCapabilitiesReceiver = new AudioCapabilitiesReceiver(this, this);
         audioCapabilitiesReceiver.register();
+
+        mDecorView = this.getWindow().getDecorView();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            mSystemUiFlag = View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+        }
     }
 
     @Override
@@ -158,13 +174,13 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 //            mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
 
             //http://120.52.73.7/103.38.59.16/youku/6572A850BE73078284C1F593A/03002001005721B16ECE05003E88037E969A53-228F-72D7-A8C5-B434E9A4547F.mp4
-            playWithExoPlayer(Uri.parse("http://101.227.216.142/vhot2.qqvideo.tc.qq.com/j0199q9hom4.mp4?vkey=7086CFBEFB7DFD27C61719C7000DB9B78B8DBECC336B74D4DC36C4AB018CB2B569AE533D79FFCA0D6C79AA0CA0B51C6ABB5235A1BC46D39910ED1AE4B36A70C1B6634E18EC59E7B3BFCE1708631C8D10458ABEED44DFCA8A&br=60&platform=2&fmt=auto&level=0&sdtfrom=v5010&locid=67551d9a-bf0d-4b25-bfc8-b2ee2334f02e&size=4580061&ocid=256578988"));
+            playWithExoPlayer(Uri.parse("http://flv.bn.netease.com/tvmrepo/2016/1/K/O/EBBJD14KO/SD/EBBJD14KO-mobile.mp4"));
         } else if (id == R.id.action_enableProxy) {
 //            mXWalkExoMediaPlayer.updateProxySetting("122.96.25.242", 9399);
             mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
+            Log.d(TAG, "=== current url " + mXWalkView.getUrl());
         } else if (id == R.id.action_disableProxy) {
             mXWalkExoMediaPlayer.updateProxySetting("", -1);
-//            mXWalkView.setVisibility(View.INVISIBLE);
         }
 
         return super.onOptionsItemSelected(item);
@@ -186,6 +202,79 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
     public void onAudioCapabilitiesChanged(AudioCapabilities audioCapabilities) {
         mXWalkExoMediaPlayer.releasePlayer();
         mXWalkExoMediaPlayer.preparePlayer(true);
+    }
+
+    public void onFullscreenToggled(boolean enterFullscreen) {
+        Activity activity = this;
+        if (enterFullscreen) {
+            if ((activity.getWindow().getAttributes().flags &
+                    WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN) != 0) {
+                mOriginalForceNotFullscreen = true;
+                activity.getWindow().clearFlags(
+                        WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+            } else {
+                mOriginalForceNotFullscreen = false;
+            }
+            if (!mIsFullscreen) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    mSystemUiFlag = mDecorView.getSystemUiVisibility();
+                    mDecorView.setSystemUiVisibility(
+                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                                    View.SYSTEM_UI_FLAG_FULLSCREEN |
+                                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                } else {
+                    if ((activity.getWindow().getAttributes().flags &
+                            WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0) {
+                        mOriginalFullscreen = true;
+                    } else {
+                        mOriginalFullscreen = false;
+                        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                    }
+                }
+                mIsFullscreen = true;
+
+//                appbar.setVisibility(View.INVISIBLE);
+                mXWalkView.setVisibility(View.INVISIBLE);
+            }
+        } else {
+            if (mOriginalForceNotFullscreen) {
+                activity.getWindow().addFlags(
+                        WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                mDecorView.setSystemUiVisibility(mSystemUiFlag);
+            } else {
+                // Clear the activity fullscreen flag.
+                if (!mOriginalFullscreen) {
+                    activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                }
+            }
+            mIsFullscreen = false;
+
+//            appbar.setVisibility(View.VISIBLE);
+            mXWalkView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_UP &&
+                event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            // If there's navigation happens when app is fullscreen,
+            // the content will still be fullscreen after navigation.
+            // In such case, the back key will exit fullscreen first.
+            if (mIsFullscreen) {
+                mXWalkExoMediaPlayer.onHideCustomView();
+                return true;
+            } else if (mXWalkView.canGoBack()) {
+                mXWalkView.goBack();
+                return true;
+            }
+        }
+        return super.dispatchKeyEvent(event);
     }
 
     // from https://stackoverflow.com/questions/19979578/android-webview-set-proxy-programatically-kitkat

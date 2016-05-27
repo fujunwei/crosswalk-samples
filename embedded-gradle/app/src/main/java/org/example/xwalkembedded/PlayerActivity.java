@@ -493,6 +493,18 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
             public boolean onMenuItemClick(MenuItem item) {
                 if (item == backgroundAudioItem) {
                     enableBackgroundAudio = !item.isChecked();
+
+                    SurfaceView temp = (SurfaceView) findViewById(R.id.surface_view2);
+                    // destroy mediaplayer
+                    player.setBackgrounded(true);
+                    //
+                    if (enableBackgroundAudio) {
+                        player.setBackgrounded(false);
+                        player.setSurface(temp.getHolder().getSurface());
+                    } else {
+                        player.setBackgrounded(false);
+                        player.setSurface(surfaceView.getHolder().getSurface());
+                    }
                     return true;
                 }
                 return false;
@@ -660,6 +672,7 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        Log.d(TAG, "======in surfaceCreated");
         if (player != null) {
             player.setSurface(holder.getSurface());
         }
@@ -672,6 +685,7 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        Log.d(TAG, "======in surfaceDestroyed");
         if (player != null) {
             player.blockingClearSurface();
         }

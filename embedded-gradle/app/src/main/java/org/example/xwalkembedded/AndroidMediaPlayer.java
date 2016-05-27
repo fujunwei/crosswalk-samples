@@ -85,6 +85,9 @@ public class AndroidMediaPlayer extends XWalkExMediaPlayer {
     @Override
     public void setSurface(Surface surface) {
         Log.d(TAG, "==== in setSurface ");
+        if (surface == null) {
+            Log.d(TAG, "==== surface is null ");
+        }
         getMediaPlayer().setSurface(surface);
     }
 
@@ -106,20 +109,20 @@ public class AndroidMediaPlayer extends XWalkExMediaPlayer {
 
     @Override
     public boolean isPlaying() {
-        Log.d(TAG, "==== in isPlaying ");
+        Log.d(TAG, "==== in isPlaying " + getMediaPlayer().isPlaying());
         return getMediaPlayer().isPlaying();
     }
 
     @Override
     public int getVideoWidth() {
-        Log.d(TAG, "==== in getVideoWidth ");
+        Log.d(TAG, "==== in getVideoWidth " + getMediaPlayer().getVideoWidth());
         return getMediaPlayer().getVideoWidth();
     }
 
     @Override
     public int getVideoHeight() {
-        Log.d(TAG, "==== in getVideoHeight ");
-        return getMediaPlayer().getVideoWidth();
+        Log.d(TAG, "==== in getVideoHeight " + getMediaPlayer().getVideoHeight());
+        return getMediaPlayer().getVideoHeight();
     }
 
     @Override
@@ -129,7 +132,7 @@ public class AndroidMediaPlayer extends XWalkExMediaPlayer {
 
     @Override
     public int getDuration() {
-        Log.d(TAG, "==== in getDuration ");
+        Log.d(TAG, "==== in getDuration " + getMediaPlayer().getDuration());
         return getMediaPlayer().getDuration();
     }
 
