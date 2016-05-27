@@ -13,6 +13,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.Surface;
 
 //import org.example.player.ExoMediaPlayer;
@@ -75,6 +76,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     private boolean playerNeedsPrepare;
     private EventLogger eventLogger;
     private DebugTextViewHelper debugViewHelper;
+    private MediaController mediaController;
 
     private Uri contentUri;
     private int contentType;
@@ -108,6 +110,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public XWalkExoMediaPlayer(Context context, XWalkView xWalkView) {
         mContext = context;
         mXWalkView = xWalkView;
+        mediaController = new KeyCompatibleMediaController(context);
         mSurfaceView = new SurfaceView(context);
         mCustomFullscreen = false;
     }
@@ -309,6 +312,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             player.addListener(this);
             player.setMetadataListener(this);
             playerNeedsPrepare = true;
+            mediaController.setMediaPlayer(player.getPlayerControl());
+            mediaController.setEnabled(true);
             eventLogger = new EventLogger();
             eventLogger.startSession();
             player.addListener(eventLogger);
@@ -341,6 +346,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     @Override
     public void onStateChanged(boolean playWhenReady, int playbackState) {
+        if (playbackState == ExoPlayer.STATE_ENDED) {
+            showControls();
+        }
         String text = "playWhenReady=" + playWhenReady + ", playbackState=";
         switch(playbackState) {
             case ExoPlayer.STATE_BUFFERING:
@@ -402,6 +410,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             Toast.makeText(mContext.getApplicationContext(), errorString, Toast.LENGTH_LONG).show();
         }
         playerNeedsPrepare = true;
+        showControls();
 
         mErrorListener.onError(null, MediaPlayer.MEDIA_ERROR_UNKNOWN, MediaPlayer.MEDIA_ERROR_UNSUPPORTED);
     }
@@ -472,6 +481,52 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         return Util.inferContentType(lastPathSegment);
     }
 
+    private static final class KeyCompatibleMediaController extends MediaController {
+
+        private MediaController.MediaPlayerControl playerControl;
+
+        public KeyCompatibleMediaController(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void setMediaPlayer(MediaController.MediaPlayerControl playerControl) {
+            super.setMediaPlayer(playerControl);
+            this.playerControl = playerControl;
+        }
+
+        @Override
+        public boolean dispatchKeyEvent(KeyEvent event) {
+            int keyCode = event.getKeyCode();
+            if (playerControl.canSeekForward() && keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    playerControl.seekTo(playerControl.getCurrentPosition() + 15000); // milliseconds
+                    show();
+                }
+                return true;
+            } else if (playerControl.canSeekBackward() && keyCode == KeyEvent.KEYCODE_MEDIA_REWIND) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    playerControl.seekTo(playerControl.getCurrentPosition() - 5000); // milliseconds
+                    show();
+                }
+                return true;
+            }
+            return super.dispatchKeyEvent(event);
+        }
+    }
+
+    private void toggleControlsVisibility() {
+        if (mediaController.isShowing()) {
+            mediaController.hide();
+        } else {
+            showControls();
+        }
+    }
+
+    private void showControls() {
+        mediaController.show(0);
+    }
+
     /**
      * Get the current activity passed from callers. It's never null.
      * @return the activity instance passed from callers.
@@ -502,6 +557,30 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         Gravity.CENTER));
+
+        decor.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                    toggleControlsVisibility();
+                } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    view.performClick();
+                }
+                return true;
+            }
+        });
+        decor.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_ESCAPE
+                        || keyCode == KeyEvent.KEYCODE_MENU) {
+                    return false;
+                }
+                return mediaController.dispatchKeyEvent(event);
+            }
+        });
+        mediaController.setAnchorView(decor);
+
         return activity;
     }
 
@@ -533,29 +612,41 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
      * like to hide its custom view.
      */
     public void onHideCustomView() {
-        XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
-
-        player.setBackgrounded(true);
-        mCustomFullscreen = false;
-
-        if (activity != null) {
-            activity.onFullscreenToggled(false);
+        if (player != null) {
+            player.setBackgrounded(true);
         }
 
-        // Remove video view from activity's ContentView.
-        FrameLayout decor = (FrameLayout) activity.getWindow().getDecorView();
-        decor.removeView(mSurfaceView);
+        if (mCustomFullscreen) {
+            XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
 
-        if (mPreOrientation != INVALID_ORIENTATION &&
-                mPreOrientation >= ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED &&
-                mPreOrientation <= ActivityInfo.SCREEN_ORIENTATION_LOCKED) {
-            activity.setRequestedOrientation(mPreOrientation);
-            mPreOrientation = INVALID_ORIENTATION;
-        }
+            if (activity != null) {
+                activity.onFullscreenToggled(false);
+            }
 
+            // Remove video view from activity's ContentView.
+            FrameLayout decor = (FrameLayout) activity.getWindow().getDecorView();
+            decor.removeView(mSurfaceView);
+
+            if (mPreOrientation != INVALID_ORIENTATION &&
+                    mPreOrientation >= ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED &&
+                    mPreOrientation <= ActivityInfo.SCREEN_ORIENTATION_LOCKED) {
+                activity.setRequestedOrientation(mPreOrientation);
+                mPreOrientation = INVALID_ORIENTATION;
+            }
+
+            decor.setOnClickListener(null);
+            decor.setOnTouchListener(null);
+            mediaController.hide();
+            mCustomFullscreen = false;
 //        player.setSurface(xwalkSurface);
-        player.setBackgrounded(false);
-        player.setPlayWhenReady(false);
+            player.setBackgrounded(false);
+            player.setPlayWhenReady(false);
+        }
     }
 
+    public void setBackgrounded(boolean background) {
+        if (player != null) {
+            player.setBackgrounded(background);
+        }
+    }
 }

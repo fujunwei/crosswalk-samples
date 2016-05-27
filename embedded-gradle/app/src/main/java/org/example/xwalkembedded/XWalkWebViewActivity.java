@@ -278,6 +278,40 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
         return super.dispatchKeyEvent(event);
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        onShown();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        onShown();
+    }
+
+    private void onShown() {
+        mXWalkExoMediaPlayer.setBackgrounded(false);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        onHidden();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        onHidden();
+    }
+
+    private void onHidden() {
+        mXWalkExoMediaPlayer.onHideCustomView();
+    }
+
+
+
     // from https://stackoverflow.com/questions/19979578/android-webview-set-proxy-programatically-kitkat
     private static boolean setProxyKK(Activity activity, String host, int port) {
         Log.d(TAG, "Setting proxy with >= 4.4 API.");
