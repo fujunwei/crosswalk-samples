@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
     <item android:id="@+id/action_settings" android:title="@string/action_settings"
         android:orderInCategory="100" app:showAsAction="never" />
-    <item android:id="@+id/action_proxy" android:title="@string/change_proxy"
+    <item android:id="@+id/action_exitfullscreen" android:title="Exit Fullscreen"
         android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_baidu" android:title="@string/load_baidu"
         android:orderInCategory="100" app:showAsAction="never" />

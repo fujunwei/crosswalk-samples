@@ -167,7 +167,7 @@ public class DemoPlayer implements ExoPlayer.Listener, ChunkSampleSource.EventLi
 
   private final RendererBuilder rendererBuilder;
   private final ExoPlayer player;
-  private final PlayerControl playerControl;
+  private final XWalkPlayerControl playerControl;
   private final Handler mainHandler;
   private final CopyOnWriteArrayList<Listener> listeners;
 
@@ -193,7 +193,7 @@ public class DemoPlayer implements ExoPlayer.Listener, ChunkSampleSource.EventLi
     this.rendererBuilder = rendererBuilder;
     player = ExoPlayer.Factory.newInstance(RENDERER_COUNT, 1000, 5000);
     player.addListener(this);
-    playerControl = new PlayerControl(player);
+    playerControl = new XWalkPlayerControl(player);
     mainHandler = new Handler();
     listeners = new CopyOnWriteArrayList<>();
     lastReportedPlaybackState = STATE_IDLE;
@@ -202,7 +202,7 @@ public class DemoPlayer implements ExoPlayer.Listener, ChunkSampleSource.EventLi
     player.setSelectedTrack(TYPE_TEXT, TRACK_DISABLED);
   }
 
-  public PlayerControl getPlayerControl() {
+  public XWalkPlayerControl getPlayerControl() {
     return playerControl;
   }
 

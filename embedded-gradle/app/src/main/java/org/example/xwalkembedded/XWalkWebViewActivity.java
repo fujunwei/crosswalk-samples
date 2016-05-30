@@ -89,6 +89,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 //        });
         XWalkSettings settings = mXWalkView.getSettings();
         mXWalkExoMediaPlayer = new XWalkExoMediaPlayer(this, mXWalkView);
+        mXWalkView.addJavascriptInterface(mXWalkExoMediaPlayer, "xwalkExoPlayer");
         mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
         String[] a = {"*.intel.com", "*.intel2.com"};
 //            mXWalkView.proxySettingsChanged("122.96.25.242", 9399, "", a);
@@ -141,11 +142,11 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
             }
 
             return true;
-        } else if (id == R.id.action_proxy) {
+        } else if (id == R.id.action_exitfullscreen) {
 //            updateNewProxy();
 //            setProxyKK(this, "122.96.25.242", 9399); // Error proxy ip child-p.intel.com:912
 //            mXWalkView.proxySettingsChanged("", 9396, "", null);
-            VideoView m;
+            mXWalkExoMediaPlayer.resetSystemFullscreen();
         } else if (id == R.id.action_baidu) {
 //            if (mProxy == null) {
 //                mProxy = new StreamProxy();

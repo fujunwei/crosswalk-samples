@@ -54,7 +54,11 @@ import com.google.android.exoplayer.util.MimeTypes;
 import com.google.android.exoplayer.util.Util;
 import com.google.android.exoplayer.util.VerboseLogUtil;
 
+import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -101,11 +105,23 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     private final int INVALID_ORIENTATION = -2;
     private int mPreOrientation = INVALID_ORIENTATION;
     boolean mCustomFullscreen;
+    boolean mSystemFullscreen;
 
     private int mBufferedPercentage;
     private int mVideoWidth;
     private int mVideoHeight;
     Map<String, String> mHeaders;
+
+    private File mTempFile;
+
+    String getDuration = "var videos = document.getElementsByTagName(\"video\");" + "\n" +
+                            "var i;" + "\n" +
+                            "for (i = 0; i < videos.length; i++) {" + "\n" +
+                            "    videos[i].onplaying = function() {" + "\n" +
+                            "        alert(this.duration);" + "\n" +
+//                            "        window.xwalkExoPlayer.setDuration(this.duration);" + "\n" +
+                            "    };" + "\n" +
+                            "}";
 
     public XWalkExoMediaPlayer(Context context, XWalkView xWalkView) {
         mContext = context;
@@ -113,6 +129,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         mediaController = new KeyCompatibleMediaController(context);
         mSurfaceView = new SurfaceView(context);
         mCustomFullscreen = false;
+        mSystemFullscreen = false;
     }
 
     public void updateProxySetting(String host, int port) {
@@ -125,8 +142,10 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         Log.d(TAG, "==== in prepareAsync ");
         preparePlayer(true);
 
+        mXWalkView.evaluateJavascript(getDuration, null);
+
         // Default is custom full screen
-        if (!mCustomFullscreen) {
+        if (!mCustomFullscreen && !mSystemFullscreen) {
             onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             mCustomFullscreen = true;
         }
@@ -135,19 +154,20 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public void setSurface(Surface surface) {
         Log.d(TAG, "==== in setSurface ");
-//        if (surface == null) {
-//            Log.d(TAG, "==== surface destroy");
-//            player.setBackgrounded(true);
-//            mCustomFullscreen = false;
-//            return;
-//        }
-//
-//        // System Full screen
-//        if (!mCustomFullscreen) {
-//            player.setBackgrounded(false);
-//            player.setSurface(surface);//mSurfaceView.getHolder().getSurface()
-//        }
-//        xwalkSurface = surface;
+        if (!mSystemFullscreen) {
+            return;
+        }
+
+        if (surface == null) {
+            Log.d(TAG, "==== surface destroy");
+            player.setBackgrounded(true);
+            return;
+        }
+
+        player.setBackgrounded(false);
+        player.setSurface(surface);//mSurfaceView.getHolder().getSurface()
+
+        xwalkSurface = surface;
     }
 
     @Override
@@ -166,7 +186,17 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void setDataSource (Context context, Uri uri) {
         Map<String, String> headers = new HashMap<String, String>();
         headers.put("User-Agent", "Crosswalk");
-        configurePlayingSource(uri, headers);
+
+        // The data URI will be saved into cache temp.
+        // file:///data/data/org.example.xwalkembedded/cache/decoded577794378mediadata
+        Uri newUri = uri;
+        if (uri.toString().contains("cache")) {
+            // Delete original temp file
+            deleteFile();
+            copyFile(uri.toString());
+            newUri = Uri.fromFile(mTempFile);
+        }
+        configurePlayingSource(newUri, headers);
     }
 
     @Override
@@ -219,7 +249,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         Log.d(TAG, "==== in start ");
         player.setPlayWhenReady(true);
 
-        if (!mCustomFullscreen) {
+        if (!mCustomFullscreen && !mSystemFullscreen) {
             onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             player.setSurface(mSurfaceView.getHolder().getSurface());
             mCustomFullscreen = true;
@@ -276,7 +306,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     }
 
     private void configurePlayingSource(Uri uri, Map<String, String> headers) {
-        Log.d(TAG, "==== in setDataSource ");
+        Log.d(TAG, "==== in setDataSource " + uri);
         contentUri = uri;//Uri.parse("http://122.96.25.242:8088/war.mp4");//uri;
         contentType = inferContentType(contentUri, "");
         contentId = "Demo Testing".toLowerCase(Locale.US).replaceAll("\\s", "");
@@ -648,5 +678,50 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         if (player != null) {
             player.setBackgrounded(background);
         }
+    }
+
+    private boolean copyFile(String src) {
+        FileOutputStream fos = null;
+        try {
+            mTempFile = File.createTempFile("decoded", "mediadata");
+            fos = new FileOutputStream(mTempFile);
+
+            File fromFile = new File(src);
+            FileInputStream fosfrom = new FileInputStream(fromFile);
+
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = fosfrom.read(buffer)) != -1) {
+                fos.write(buffer, 0, len);
+            }
+            fosfrom.close();
+            return true;
+        } catch (IOException e) {
+            return false;
+        } finally {
+            try {
+                if (fos != null) fos.close();
+            } catch (IOException e) {
+                // Can't do anything.
+            }
+        }
+    }
+
+    private void deleteFile() {
+        if (mTempFile == null) return;
+        if (!mTempFile.delete()) {
+            // File will be deleted when MediaPlayer releases its handler.
+            Log.e(TAG, "Failed to delete temporary file: " + mTempFile);
+            assert (false);
+        }
+    }
+
+    public void setDuration(int duration) {
+        Log.d(TAG, "====evaluate from js " + duration);
+        player.getPlayerControl().setDuration(duration);
+    }
+
+    public void resetSystemFullscreen() {
+        mSystemFullscreen = !mSystemFullscreen;
     }
 }

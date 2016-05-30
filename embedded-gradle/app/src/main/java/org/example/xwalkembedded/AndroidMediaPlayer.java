@@ -33,6 +33,7 @@ import org.xwalk.core.XWalkExMediaPlayer;
 import org.xwalk.core.XWalkView;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -91,18 +92,19 @@ public class AndroidMediaPlayer extends XWalkExMediaPlayer {
         getMediaPlayer().setSurface(surface);
     }
 
-//    @Override
-//    public void setDataSource (FileDescriptor fd, long offset, long length) {
-//        // super.setDataSource(fd, offset, length);
-//    }
-//
-//    @Override
-//    public void setDataSource (Context context, Uri uri) {
-//        // super.setDataSource(context, uri);
-//    }
+    @Override
+    public void setDataSource(FileDescriptor fd, long offset, long length) {
+        Log.d(TAG, "=====setDataSource " + fd.toString());
+    }
+
+    @Override
+    public void setDataSource(Context context, Uri uri) {
+        Log.d(TAG, "=====setDataSource " + uri);
+    }
 
     @Override
     public void setDataSource(Context context, Uri uri, Map<String, String> headers) {
+        Log.d(TAG, "=====ddd setDataSource " + uri);
 //        createHttpConnectionProxy(getMediaPlayer(), context, uri, headers);
         createSocketProxy(getMediaPlayer(), context, uri, headers);
     }
