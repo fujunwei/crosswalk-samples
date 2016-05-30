@@ -266,11 +266,11 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             return getSystemMediaPlayer().getCurrentPosition();
         } else {
 //        Log.d(TAG, "==== in getCurrentPosition " + player.getBufferedPercentage());
-            if (mBufferedPercentage != player.getBufferedPercentage()) {
+            if (player != null && mBufferedPercentage != player.getBufferedPercentage()) {
                 mBufferedPercentage = player.getBufferedPercentage();
                 mBufferingUpdateListener.onBufferingUpdate(null, mBufferedPercentage);
             }
-            return (int) player.getCurrentPosition();
+            return player == null ? 0 : (int) player.getCurrentPosition();
         }
     }
 
@@ -279,8 +279,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         if (mSystemMediaPlayer) {
             return getSystemMediaPlayer().getDuration();
         } else {
-            Log.d(TAG, "==== in getDuration " + (int) player.getDuration());
-            return (int) player.getDuration();
+            Log.d(TAG, "==== in getDuration " + (player == null ? 0 : (int) player.getDuration()));
+            return player == null ? 0 : (int) player.getDuration();
         }
     }
 
@@ -309,6 +309,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         if (mSystemMediaPlayer) {
             getSystemMediaPlayer().start();
         } else {
+            if (player == null) return;
             player.setPlayWhenReady(true);
 
             if (!mCustomFullscreen && !mSystemFullscreen) {
@@ -325,6 +326,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         if (mSystemMediaPlayer) {
             getSystemMediaPlayer().pause();
         } else {
+            if (player == null) return;
             player.setPlayWhenReady(false);
         }
     }
@@ -335,6 +337,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         if (mSystemMediaPlayer) {
             getSystemMediaPlayer().seekTo(msec);
         } else {
+            if (player == null) return;
             player.seekTo(msec);
             mSeekCompleteListener.onSeekComplete(null);
         }
@@ -395,6 +398,10 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         mHeaders = headers;
 
         mSystemMediaPlayer = false;
+        // Release exoplayer to play new uri
+        if (player != null) {
+            releasePlayer();
+        }
         // Prepare exoplayer
         preparePlayer(true);
 
