@@ -176,7 +176,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 //            mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
 
             //http://120.52.73.7/103.38.59.16/youku/6572A850BE73078284C1F593A/03002001005721B16ECE05003E88037E969A53-228F-72D7-A8C5-B434E9A4547F.mp4
-            playWithExoPlayer(Uri.parse("http://flv.bn.netease.com/tvmrepo/2016/1/K/O/EBBJD14KO/SD/EBBJD14KO-mobile.mp4"));
+            playWithExoPlayer(Uri.parse("http://pcvideoyd.titan.mgtv.com/mp4/2016/zongyi/txdxqt_52216/62A9757A1712E4CBDF6DF9B8CC58F2DA_20160529_1_1_386.mp4?uuid=12d9555a04894080837b6563217cf3ed&t=574c3436&pno=1031&sign=c0ff64fb053c5ec0b1dc07bdb8147e4d&win=300&srgid=25009&urgid=632&srgids=25009&nid=25009&payload=usertoken%3dhit%3d0%5eruip%3d3227962430&rdur=21600&arange=900&limitrate=0&fid=62A9757A1712E4CBDF6DF9B8CC58F2DA&ver=0x03"));
         } else if (id == R.id.action_enableProxy) {
 //            mXWalkExoMediaPlayer.updateProxySetting("122.96.25.242", 9399);
             mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
