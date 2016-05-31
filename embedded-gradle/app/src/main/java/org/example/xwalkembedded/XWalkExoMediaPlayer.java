@@ -17,6 +17,7 @@ import android.view.MotionEvent;
 import android.view.Surface;
 
 //import org.example.player.ExoMediaPlayer;
+import org.apache.http.util.EncodingUtils;
 import org.example.player.DashRendererBuilder;
 import org.example.player.DemoPlayer;
 import org.example.player.ExtractorRendererBuilder;
@@ -54,11 +55,14 @@ import com.google.android.exoplayer.util.MimeTypes;
 import com.google.android.exoplayer.util.Util;
 import com.google.android.exoplayer.util.VerboseLogUtil;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -124,6 +128,17 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 //                            "        window.xwalkExoPlayer.setDuration(this.duration);" + "\n" +
                             "    };" + "\n" +
                             "}";
+    String playDiv = "var obj = document.createElement(\"div\");" + "\n" +
+                    "obj.id=\"xwalkVideo\";" + "\n" +
+                    "obj.style.width = \"1280px\"" + "\n" +
+                    "obj.style.height = \"800px\"" + "\n" +
+                    "obj.style.position = \"absolute\"" + "\n" +
+                    "obj.style.zIndex = \"999\"" + "\n" +
+                    "obj.style.background = \"darkblue\"" + "\n" +
+                    "obj.style.top = \"0\"" + "\n" +
+                    "obj.style.left = \"0\"" + "\n" +
+                    "obj.innerText = \"sdsdsdaf\"" + "\n" +
+                    "document.body.appendChild(obj);";
 
     public XWalkExoMediaPlayer(Context context, XWalkView xWalkView) {
         mContext = context;
@@ -166,7 +181,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         if (mSystemMediaPlayer) {
             getSystemMediaPlayer().setSurface(surface);
         } else {
-            if (!mSystemFullscreen) {
+            if (!mSystemFullscreen || player == null) {
                 return;
             }
             if (surface == null) {
@@ -410,7 +425,6 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             mCustomFullscreen = true;
         }
-        mXWalkView.evaluateJavascript(getDuration, null);
     }
 
     // Internal methods
@@ -766,9 +780,11 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             decor.setOnTouchListener(null);
             mediaController.hide();
             mCustomFullscreen = false;
+            if (player != null) {
 //        player.setSurface(xwalkSurface);
-            player.setBackgrounded(false);
-            player.setPlayWhenReady(false);
+                player.setBackgrounded(false);
+                player.setPlayWhenReady(false);
+            }
         }
     }
 

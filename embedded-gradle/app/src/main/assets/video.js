@@ -1,37 +1,19 @@
-<!DOCTYPE html>
-<html>
-<body>
-
-<video width="400" id="local_video" controls>
-  <source src="file:///android_asset/img/mov_bbb.mp4" type="video/mp4">
-  <source src="file:///android_asset/img/mov_bbb.ogg" type="video/ogg">
-  Your browser does not support HTML5 video.
-</video>
-
-<p>
-  Video courtesy of
-  <a href="http://www.bigbuckbunny.org/" target="_blank">Big Buck Bunny</a>.
-</p>
-<video src="http://122.96.25.242:8088/trafficserver/war.mp4" width="320" height="240" controls autobuffer></video>
-
-</body>
-</html>
-
-<!--script>
 var videos = document.getElementsByTagName("video");
 var i;
+var divId = 1;
 for (i = 0; i < videos.length; i++) {
 	videos[i].onplaying = function() {
 //		alert(this.duration);
 		var rect = getAbsoluteLocationEx(this);
 		var obj = document.createElement("div");
-        obj.id="xwalkVideo";
+        obj.id="xwalkVideo" + divId;
+        divId++;
         obj.style.width = rect.offsetWidth + "px"
         obj.style.height = rect.offsetHeight + "px"
         obj.style.position = "absolute"
-//        obj.style.zIndex = "999"
-//        obj.style.background = "darkblue"
-        obj.filter = "alpha(Opacity=80);-moz-opacity:0.8;opacity: 0.8;z-index:999; background-color:#ffffff";
+        obj.style.zIndex = "999"
+        obj.style.background = "darkblue"
+//        obj.filter = "alpha(Opacity=80);-moz-opacity:0.8;opacity: 0.8;z-index:20000; background-color:#ffffff";
         obj.style.top = rect.absoluteTop + "px"
         obj.style.left = rect.absoluteLeft + "px"
         obj.innerText = "sdsdsdaf"
@@ -39,6 +21,7 @@ for (i = 0; i < videos.length; i++) {
         img.src = "file:///android_asset/img/player.png";
         obj.appendChild(img);
         document.body.appendChild(obj);
+        document.getElementById(obj.id).onclick = function(){alert("click on video element");};
 	};
 }
 function getAbsoluteLocationEx(element) {
@@ -62,4 +45,3 @@ function getAbsoluteLocationEx(element) {
     return {absoluteTop:offsetTop, absoluteLeft:offsetLeft,
             offsetWidth:offsetWidth, offsetHeight:offsetHeight};
 }
-</script-->

@@ -26,11 +26,14 @@ import android.view.SurfaceView;
 import android.view.View;
 
 //import org.xwalk.core.XWalkGeolocationCallback;
+import org.xwalk.core.XWalkPreferences;
+import org.xwalk.core.XWalkResourceClient;
 import org.xwalk.core.XWalkSettings;
 import org.xwalk.core.XWalkUIClient;
 import org.xwalk.core.XWalkView;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -87,6 +90,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 //                                                           XWalkGeolocationCallback callback) {
 //            }
 //        });
+        XWalkPreferences.setValue(XWalkPreferences.REMOTE_DEBUGGING, true);
         XWalkSettings settings = mXWalkView.getSettings();
         mXWalkExoMediaPlayer = new XWalkExoMediaPlayer(this, mXWalkView);
         mXWalkView.addJavascriptInterface(mXWalkExoMediaPlayer, "xwalkExoPlayer");
@@ -111,6 +115,14 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
                     View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
                     View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
         }
+
+        mXWalkView.setResourceClient(new XWalkResourceClient(mXWalkView) {
+            @Override
+            public void onDocumentLoadedInFrame(XWalkView view, long frameId) {
+                Log.d(TAG, "=====in onDocumentLoadedInFrame");
+                mXWalkView.evaluateJavascript(getFromAssets("video.js"), null);
+            }
+        });
     }
 
     @Override
@@ -312,6 +324,24 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
     }
 
 
+    public String getFromAssets(String fileName){
+        String result = "";
+        try {
+            InputStream in = getResources().getAssets().open(fileName);
+            //获取文件的字节数
+            int lenght = in.available();
+            //创建byte数组
+            byte[]  buffer = new byte[lenght];
+            //将文件中的数据读到byte数组中
+            in.read(buffer);
+//            result = EncodingUtils.getString(buffer, ENCODING);
+            result = new String(buffer);
+//            Log.d(TAG, "======getFromAssets " + result);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 
     // from https://stackoverflow.com/questions/19979578/android-webview-set-proxy-programatically-kitkat
     private static boolean setProxyKK(Activity activity, String host, int port) {
