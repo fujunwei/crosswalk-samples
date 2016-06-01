@@ -12,7 +12,7 @@ for (i = 0; i < videos.length; i++) {
         obj.style.height = rect.offsetHeight + "px"
         obj.style.position = "absolute"
         obj.style.zIndex = "999"
-        obj.style.background = "darkblue"
+//        obj.style.background = "darkblue"
 //        obj.filter = "alpha(Opacity=80);-moz-opacity:0.8;opacity: 0.8;z-index:20000; background-color:#ffffff";
         obj.style.top = rect.absoluteTop + "px"
         obj.style.left = rect.absoluteLeft + "px"
@@ -21,7 +21,10 @@ for (i = 0; i < videos.length; i++) {
         img.src = "file:///android_asset/img/player.png";
         obj.appendChild(img);
         document.body.appendChild(obj);
-        document.getElementById(obj.id).onclick = function(){alert("click on video element");};
+        document.getElementById(obj.id).onclick = function() {
+//            alert("click on video element");
+            window.xwalkExoPlayer.enterFullscreen();
+        };
 	};
 }
 function getAbsoluteLocationEx(element) {

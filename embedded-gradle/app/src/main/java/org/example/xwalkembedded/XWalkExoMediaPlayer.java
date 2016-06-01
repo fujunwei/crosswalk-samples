@@ -18,11 +18,14 @@ import android.view.Surface;
 
 //import org.example.player.ExoMediaPlayer;
 import org.apache.http.util.EncodingUtils;
+import org.chromium.base.ThreadUtils;
 import org.example.player.DashRendererBuilder;
 import org.example.player.DemoPlayer;
 import org.example.player.ExtractorRendererBuilder;
 import org.example.player.HlsRendererBuilder;
 import org.example.player.SmoothStreamingRendererBuilder;
+import org.example.player.XWalkPlayerControl;
+import org.xwalk.core.JavascriptInterface;
 import org.xwalk.core.XWalkExMediaPlayer;
 import org.xwalk.core.XWalkView;
 
@@ -108,8 +111,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     XWalkView mXWalkView;
     private final int INVALID_ORIENTATION = -2;
     private int mPreOrientation = INVALID_ORIENTATION;
-    boolean mCustomFullscreen;
-    boolean mSystemFullscreen;
+    boolean mIsFullscreen;
+    boolean mEnableFullscreen;
 
     private int mBufferedPercentage;
     private int mVideoWidth;
@@ -118,41 +121,24 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     private File mTempFile;
     private boolean mSystemMediaPlayer;
+    private boolean mEnableExoPlayer;
     private MediaPlayer mMediaPlayer;
 
-    String getDuration = "var videos = document.getElementsByTagName(\"video\");" + "\n" +
-                            "var i;" + "\n" +
-                            "for (i = 0; i < videos.length; i++) {" + "\n" +
-                            "    videos[i].onplaying = function() {" + "\n" +
-                            "        alert(this.duration);" + "\n" +
-//                            "        window.xwalkExoPlayer.setDuration(this.duration);" + "\n" +
-                            "    };" + "\n" +
-                            "}";
-    String playDiv = "var obj = document.createElement(\"div\");" + "\n" +
-                    "obj.id=\"xwalkVideo\";" + "\n" +
-                    "obj.style.width = \"1280px\"" + "\n" +
-                    "obj.style.height = \"800px\"" + "\n" +
-                    "obj.style.position = \"absolute\"" + "\n" +
-                    "obj.style.zIndex = \"999\"" + "\n" +
-                    "obj.style.background = \"darkblue\"" + "\n" +
-                    "obj.style.top = \"0\"" + "\n" +
-                    "obj.style.left = \"0\"" + "\n" +
-                    "obj.innerText = \"sdsdsdaf\"" + "\n" +
-                    "document.body.appendChild(obj);";
-
-    public XWalkExoMediaPlayer(Context context, XWalkView xWalkView) {
+    public XWalkExoMediaPlayer(Context context, XWalkView xWalkView, SurfaceView surfaceView) {
         mContext = context;
         mXWalkView = xWalkView;
         mediaController = new KeyCompatibleMediaController(context);
-        mSurfaceView = new SurfaceView(context);
-        mCustomFullscreen = false;
-        mSystemFullscreen = false;
-        mSystemMediaPlayer = false;
+        mSurfaceView = surfaceView;//new SurfaceView(context);
+        mEnableFullscreen = true;
+        mEnableExoPlayer = true;
     }
 
     protected MediaPlayer getSystemMediaPlayer() {
         if (mMediaPlayer == null) {
             mMediaPlayer = new MediaPlayer();
+
+            mediaController.setMediaPlayer(new XWalkPlayerControl(mMediaPlayer));
+            mediaController.setEnabled(true);
             Log.e(TAG, "Create a Android System Media Player");
         }
         return mMediaPlayer;
@@ -178,12 +164,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void setSurface(Surface surface) {
         Log.d(TAG, "==== in setSurface ");
 
-        if (mSystemMediaPlayer) {
-            getSystemMediaPlayer().setSurface(surface);
-        } else {
-            if (!mSystemFullscreen || player == null) {
-                return;
-            }
+        if (mEnableExoPlayer) {
+            if (mEnableFullscreen || player == null) return;
+
             if (surface == null) {
                 Log.d(TAG, "==== surface destroy");
                 player.setBackgrounded(true);
@@ -192,15 +175,28 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
             player.setBackgrounded(false);
             player.setSurface(surface);//mSurfaceView.getHolder().getSurface()
-
-            xwalkSurface = surface;
+        } else {
+            if (mEnableFullscreen) {
+                if (surface == null) {
+                    getSystemMediaPlayer().setSurface(null);
+                } else {
+                    getSystemMediaPlayer().setSurface(mSurfaceView.getHolder().getSurface());
+                }
+            } else {
+                getSystemMediaPlayer().setSurface(surface);
+            }
         }
+
+        xwalkSurface = surface;
     }
 
     @Override
     public void setDataSource(Context context, Uri uri, Map<String, String> headers) {
-        if (uri.getScheme().equals("file")) {
+        Log.d(TAG, "==== in setDataSource " + uri);
+        if (!mEnableExoPlayer || uri.getScheme().equals("file")) {
             mSystemMediaPlayer = true;
+            setSystemListener();
+
             try {
                 getSystemMediaPlayer().setDataSource(context, uri, headers);
             } catch (IOException e) {
@@ -210,17 +206,21 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             startExoPlayer(uri, headers);
         }
 
+        // Default is custom full screen
+        onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
 //        new PrebufferData(uri.toString());
     }
 
     @Override
     public void setDataSource(FileDescriptor fd, long offset, long length) {
-        if (mSystemMediaPlayer) {
-            try {
-                getSystemMediaPlayer().setDataSource(fd, offset, length);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        mSystemMediaPlayer = true;
+        setSystemListener();
+
+        try {
+            getSystemMediaPlayer().setDataSource(fd, offset, length);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -232,7 +232,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
         // The data URI will be saved into cache temp.
         // file:///data/data/org.example.xwalkembedded/cache/decoded577794378mediadata
-        if (uri.getScheme().equals("file")) {
+        if (!mEnableExoPlayer || uri.getScheme().equals("file")) {
             mSystemMediaPlayer = true;
             setSystemListener();
             try {
@@ -243,6 +243,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         } else {
             startExoPlayer(uri, headers);
         }
+
+        // Default is custom full screen
+        onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
     }
 
     @Override
@@ -323,16 +326,10 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         Log.d(TAG, "==== in start ");
         if (mSystemMediaPlayer) {
             getSystemMediaPlayer().start();
-        } else {
-            if (player == null) return;
+        } else if (player != null){
             player.setPlayWhenReady(true);
-
-            if (!mCustomFullscreen && !mSystemFullscreen) {
-                onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                player.setSurface(mSurfaceView.getHolder().getSurface());
-                mCustomFullscreen = true;
-            }
         }
+        onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
     }
 
     @Override
@@ -404,7 +401,6 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     }
 
     private void startExoPlayer(Uri uri, Map<String, String> headers) {
-        Log.d(TAG, "==== in setDataSource " + uri);
         contentUri = uri;//Uri.parse("http://122.96.25.242:8088/war.mp4");//uri;
         contentType = inferContentType(contentUri, "");
         contentId = "Demo Testing".toLowerCase(Locale.US).replaceAll("\\s", "");
@@ -419,12 +415,6 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         }
         // Prepare exoplayer
         preparePlayer(true);
-
-        // Default is custom full screen
-        if (!mCustomFullscreen && !mSystemFullscreen) {
-            onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-            mCustomFullscreen = true;
-        }
     }
 
     // Internal methods
@@ -468,7 +458,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             player.prepare();
             playerNeedsPrepare = false;
         }
-        player.setSurface(mSurfaceView.getHolder().getSurface());
+//        player.setSurface(mSurfaceView.getHolder().getSurface());
         player.setPlayWhenReady(playWhenReady);
     }
 
@@ -693,14 +683,14 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         }
 
         // Add the video view to the activity's DecorView.
-        FrameLayout decor = (FrameLayout) activity.getWindow().getDecorView();
-        decor.addView(view, 0,
-                new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        Gravity.CENTER));
+//        FrameLayout decor = (FrameLayout) activity.getWindow().getDecorView();
+//        decor.addView(view, 0,
+//                new FrameLayout.LayoutParams(
+//                        ViewGroup.LayoutParams.MATCH_PARENT,
+//                        ViewGroup.LayoutParams.MATCH_PARENT,
+//                        Gravity.CENTER));
 
-        decor.setOnTouchListener(new View.OnTouchListener() {
+        view.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
@@ -711,7 +701,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
                 return true;
             }
         });
-        decor.setOnKeyListener(new View.OnKeyListener() {
+        view.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_ESCAPE
@@ -721,7 +711,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
                 return mediaController.dispatchKeyEvent(event);
             }
         });
-        mediaController.setAnchorView(decor);
+        mediaController.setAnchorView(view);
 
         return activity;
     }
@@ -736,6 +726,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
      * is dismissed.
      */
     public void onShowCustomView(int requestedOrientation) {
+        if (!mEnableFullscreen) return;
+
         Activity activity = addContentView(mSurfaceView);
         if (activity == null) return;
 
@@ -747,6 +739,25 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             mPreOrientation = orientation;
             activity.setRequestedOrientation(requestedOrientation);
         }
+
+        if (mEnableExoPlayer) {
+            if (player != null) {
+                player.setSurface(mSurfaceView.getHolder().getSurface());
+            }
+        } else {
+//            getSystemMediaPlayer().setSurface(mSurfaceView.getHolder().getSurface());
+        }
+        mIsFullscreen = true;
+    }
+
+    @JavascriptInterface
+    public void enterFullscreen() {
+        ThreadUtils.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                start();
+            }
+        });
     }
 
     /**
@@ -754,37 +765,40 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
      * like to hide its custom view.
      */
     public void onHideCustomView() {
-        if (player != null) {
+        if (!mEnableFullscreen || !mIsFullscreen) return;
+        if (mEnableExoPlayer && player != null) {
             player.setBackgrounded(true);
         }
 
-        if (mCustomFullscreen) {
-            XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
+        XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
 
-            if (activity != null) {
-                activity.onFullscreenToggled(false);
-            }
+        if (activity != null) {
+            activity.onFullscreenToggled(false);
+        }
 
-            // Remove video view from activity's ContentView.
-            FrameLayout decor = (FrameLayout) activity.getWindow().getDecorView();
-            decor.removeView(mSurfaceView);
+        // Remove video view from activity's ContentView.
+//        FrameLayout decor = (FrameLayout) activity.getWindow().getDecorView();
+//        decor.removeView(mSurfaceView);
 
-            if (mPreOrientation != INVALID_ORIENTATION &&
-                    mPreOrientation >= ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED &&
-                    mPreOrientation <= ActivityInfo.SCREEN_ORIENTATION_LOCKED) {
-                activity.setRequestedOrientation(mPreOrientation);
-                mPreOrientation = INVALID_ORIENTATION;
-            }
+        if (mPreOrientation != INVALID_ORIENTATION &&
+                mPreOrientation >= ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED &&
+                mPreOrientation <= ActivityInfo.SCREEN_ORIENTATION_LOCKED) {
+            activity.setRequestedOrientation(mPreOrientation);
+            mPreOrientation = INVALID_ORIENTATION;
+        }
 
-            decor.setOnClickListener(null);
-            decor.setOnTouchListener(null);
-            mediaController.hide();
-            mCustomFullscreen = false;
+//        mSurfaceView.setVisibility(View.INVISIBLE);
+        mediaController.hide();
+        mIsFullscreen = false;
+
+        if (mEnableExoPlayer) {
             if (player != null) {
 //        player.setSurface(xwalkSurface);
                 player.setBackgrounded(false);
                 player.setPlayWhenReady(false);
             }
+        } else {
+            getSystemMediaPlayer().pause();
         }
     }
 
@@ -830,12 +844,11 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         }
     }
 
-    public void setDuration(int duration) {
-        Log.d(TAG, "====evaluate from js " + duration);
-        player.getPlayerControl().setDuration(duration);
+    public void resetSystemFullscreen() {
+        mEnableFullscreen = !mEnableFullscreen;
     }
 
-    public void resetSystemFullscreen() {
-        mSystemFullscreen = !mSystemFullscreen;
+    public void enableExoPlayer(boolean exoPlayer) {
+        mEnableExoPlayer = exoPlayer;
     }
 }
