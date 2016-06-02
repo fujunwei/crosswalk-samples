@@ -48,31 +48,34 @@ public class XWalkPlayerControl implements MediaController.MediaPlayerControl {
     public int getCurrentPosition() {
         if (exoPlayer != null) {
             return exoPlayer.getDuration() == -1L ? 0 : (int) exoPlayer.getCurrentPosition();
-        } else {
-            return mediaPlayer.getDuration() == -1L ? 0 : mediaPlayer.getCurrentPosition();
+        } else if (mediaPlayer != null) {
+            return mediaPlayer.getDuration() == -1L  ? 0 : mediaPlayer.getCurrentPosition();
         }
+        return 0;
     }
 
     public int getDuration() {
         if (exoPlayer != null) {
             return exoPlayer.getDuration() == -1L ? 0 : (int) this.exoPlayer.getDuration();
-        } else {
+        } else if (mediaPlayer != null) {
             return mediaPlayer.getDuration() == -1L ? 0 : mediaPlayer.getDuration();
         }
+        return 0;
     }
 
     public boolean isPlaying() {
         if (exoPlayer != null) {
             return exoPlayer.getPlayWhenReady();
-        } else {
+        } else if (mediaPlayer != null) {
             return mediaPlayer.isPlaying();
         }
+        return false;
     }
 
     public void start() {
         if (exoPlayer != null) {
             exoPlayer.setPlayWhenReady(true);
-        } else {
+        } else if (mediaPlayer != null) {
             mediaPlayer.start();
         }
     }
@@ -80,7 +83,7 @@ public class XWalkPlayerControl implements MediaController.MediaPlayerControl {
     public void pause() {
         if (exoPlayer != null) {
             exoPlayer.setPlayWhenReady(false);
-        } else {
+        } else if (mediaPlayer != null) {
             mediaPlayer.pause();
         }
     }
@@ -89,10 +92,15 @@ public class XWalkPlayerControl implements MediaController.MediaPlayerControl {
         if (exoPlayer != null) {
             long seekPosition = this.exoPlayer.getDuration() == -1L ? 0L : (long) Math.min(Math.max(0, timeMillis), this.getDuration());
             this.exoPlayer.seekTo(seekPosition);
-        } else {
-            long seekPosition = mediaPlayer.getDuration() == -1L ? 0L : (long) Math.min(Math.max(0, timeMillis), this.getDuration());
-            mediaPlayer.seekTo((int) seekPosition);
+        } else if (mediaPlayer != null) {
+            int seekPosition = Math.min(Math.max(0, timeMillis), this.getDuration());
+            mediaPlayer.seekTo(seekPosition);
         }
+    }
+
+    public void release() {
+        exoPlayer = null;
+        mediaPlayer = null;
     }
 
 }

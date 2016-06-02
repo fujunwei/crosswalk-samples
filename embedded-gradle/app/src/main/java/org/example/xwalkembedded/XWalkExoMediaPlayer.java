@@ -123,6 +123,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     private boolean mSystemMediaPlayer;
     private boolean mEnableExoPlayer;
     private MediaPlayer mMediaPlayer;
+    private XWalkPlayerControl mXWalkPlayerControl;
 
     public XWalkExoMediaPlayer(Context context, XWalkView xWalkView, SurfaceView surfaceView) {
         mContext = context;
@@ -133,15 +134,26 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         mEnableExoPlayer = true;
     }
 
-    protected MediaPlayer getSystemMediaPlayer() {
+    private void startSystemMediaPlayer() {
         if (mMediaPlayer == null) {
             mMediaPlayer = new MediaPlayer();
 
-            mediaController.setMediaPlayer(new XWalkPlayerControl(mMediaPlayer));
+            mSystemMediaPlayer = true;
+            setSystemListener();
+
+            mXWalkPlayerControl = new XWalkPlayerControl(mMediaPlayer);
+            mediaController.setMediaPlayer(mXWalkPlayerControl);
             mediaController.setEnabled(true);
             Log.e(TAG, "Create a Android System Media Player");
         }
-        return mMediaPlayer;
+    }
+
+    private void releaseSystemMediaPlayer() {
+        if (mMediaPlayer != null) {
+            mXWalkPlayerControl.release();
+            mMediaPlayer.release();
+            mMediaPlayer = null;
+        }
     }
 
     public void updateProxySetting(String host, int port) {
@@ -152,10 +164,10 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public void prepareAsync() {
         Log.d(TAG, "==== in prepareAsync ");
-        if (mSystemMediaPlayer) {
-            getSystemMediaPlayer().prepareAsync();
+        if (mSystemMediaPlayer && mMediaPlayer != null) {
+            mMediaPlayer.prepareAsync();
         } else {
-            // Have prepared in setDataSourcegetMediaPlayer
+            // Have prepared in setDataSource getMediaPlayer
 //        preparePlayer(true);
         }
     }
@@ -164,9 +176,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void setSurface(Surface surface) {
         Log.d(TAG, "==== in setSurface ");
 
-        if (mEnableExoPlayer) {
-            if (mEnableFullscreen || player == null) return;
+        if (mEnableFullscreen) return;
 
+        if (player != null) {
             if (surface == null) {
                 Log.d(TAG, "==== surface destroy");
                 player.setBackgrounded(true);
@@ -175,16 +187,13 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
             player.setBackgrounded(false);
             player.setSurface(surface);//mSurfaceView.getHolder().getSurface()
-        } else {
-            if (mEnableFullscreen) {
-                if (surface == null) {
-                    getSystemMediaPlayer().setSurface(null);
-                } else {
-                    getSystemMediaPlayer().setSurface(mSurfaceView.getHolder().getSurface());
-                }
-            } else {
-                getSystemMediaPlayer().setSurface(surface);
-            }
+        } else if (mMediaPlayer != null) {
+            mMediaPlayer.setSurface(surface);
+//                if (surface == null) {
+//                    getSystemMediaPlayer().setSurface(null);
+//                } else {
+//                    getSystemMediaPlayer().setSurface(mSurfaceView.getHolder().getSurface());
+//                }
         }
 
         xwalkSurface = surface;
@@ -194,11 +203,10 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void setDataSource(Context context, Uri uri, Map<String, String> headers) {
         Log.d(TAG, "==== in setDataSource " + uri);
         if (!mEnableExoPlayer || uri.getScheme().equals("file")) {
-            mSystemMediaPlayer = true;
-            setSystemListener();
+            startSystemMediaPlayer();
 
             try {
-                getSystemMediaPlayer().setDataSource(context, uri, headers);
+                mMediaPlayer.setDataSource(context, uri, headers);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -214,11 +222,10 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     @Override
     public void setDataSource(FileDescriptor fd, long offset, long length) {
-        mSystemMediaPlayer = true;
-        setSystemListener();
+        startSystemMediaPlayer();
 
         try {
-            getSystemMediaPlayer().setDataSource(fd, offset, length);
+            mMediaPlayer.setDataSource(fd, offset, length);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -233,10 +240,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         // The data URI will be saved into cache temp.
         // file:///data/data/org.example.xwalkembedded/cache/decoded577794378mediadata
         if (!mEnableExoPlayer || uri.getScheme().equals("file")) {
-            mSystemMediaPlayer = true;
-            setSystemListener();
+            startSystemMediaPlayer();
             try {
-                getSystemMediaPlayer().setDataSource(context, uri);
+                mMediaPlayer.setDataSource(context, uri);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -251,7 +257,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public boolean isPlaying() {
         if (mSystemMediaPlayer) {
-            return getSystemMediaPlayer().isPlaying();
+            return mMediaPlayer == null ? false : mMediaPlayer.isPlaying();
         } else {
             Log.d(TAG, "==== in isPlaying " + (player == null ? false : player.isPlaying()));
             return player == null ? false : player.isPlaying();
@@ -261,7 +267,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public int getVideoWidth() {
         if (mSystemMediaPlayer) {
-            return getSystemMediaPlayer().getVideoWidth();
+            return mMediaPlayer == null ? 0 : mMediaPlayer.getVideoWidth();
         } else {
             Log.d(TAG, "==== in getVideoWidth " + mVideoWidth);
             return mVideoWidth;
@@ -271,7 +277,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public int getVideoHeight() {
         if (mSystemMediaPlayer) {
-            return getSystemMediaPlayer().getVideoHeight();
+            return mMediaPlayer == null ? 0 : mMediaPlayer.getVideoHeight();
         } else {
             Log.d(TAG, "==== in getVideoHeight " + mVideoHeight);
             return mVideoHeight;
@@ -281,7 +287,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public int getCurrentPosition() {
         if (mSystemMediaPlayer) {
-            return getSystemMediaPlayer().getCurrentPosition();
+            return mMediaPlayer == null ? 0 : mMediaPlayer.getCurrentPosition();
         } else {
 //        Log.d(TAG, "==== in getCurrentPosition " + player.getBufferedPercentage());
             if (player != null && mBufferedPercentage != player.getBufferedPercentage()) {
@@ -295,7 +301,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public int getDuration() {
         if (mSystemMediaPlayer) {
-            return getSystemMediaPlayer().getDuration();
+            return mMediaPlayer == null ? 0 : mMediaPlayer.getDuration();
         } else {
             Log.d(TAG, "==== in getDuration " + (player == null ? 0 : (int) player.getDuration()));
             return player == null ? 0 : (int) player.getDuration();
@@ -306,8 +312,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void release() {
         Log.d(TAG, "==== in release ");
         if (mSystemMediaPlayer) {
-            getSystemMediaPlayer().release();
-            mMediaPlayer = null;
+            releaseSystemMediaPlayer();
         } else {
             releasePlayer();
         }
@@ -316,16 +321,16 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public void setVolume(float volume1, float volume2) {
         Log.d(TAG, "==== in setVolume ");
-        if (mSystemMediaPlayer) {
-            getSystemMediaPlayer().setVolume(volume1, volume2);
+        if (mSystemMediaPlayer && mMediaPlayer != null) {
+            mMediaPlayer.setVolume(volume1, volume2);
         }
     }
 
     @Override
     public void start() {
         Log.d(TAG, "==== in start ");
-        if (mSystemMediaPlayer) {
-            getSystemMediaPlayer().start();
+        if (mSystemMediaPlayer && mMediaPlayer != null) {
+            mMediaPlayer.start();
         } else if (player != null){
             player.setPlayWhenReady(true);
         }
@@ -335,8 +340,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public void pause() {
         Log.d(TAG, "==== in pause ");
-        if (mSystemMediaPlayer) {
-            getSystemMediaPlayer().pause();
+        if (mSystemMediaPlayer && mMediaPlayer != null) {
+            mMediaPlayer.pause();
         } else {
             if (player == null) return;
             player.setPlayWhenReady(false);
@@ -346,8 +351,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public void seekTo(int msec) {
         Log.d(TAG, "==== in seekTo ");
-        if (mSystemMediaPlayer) {
-            getSystemMediaPlayer().seekTo(msec);
+        if (mSystemMediaPlayer && mMediaPlayer != null) {
+            mMediaPlayer.seekTo(msec);
         } else {
             if (player == null) return;
             player.seekTo(msec);
@@ -392,12 +397,12 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     }
 
     private void setSystemListener() {
-        getSystemMediaPlayer().setOnBufferingUpdateListener(mBufferingUpdateListener);
-        getSystemMediaPlayer().setOnCompletionListener(mCompletionListener);
-        getSystemMediaPlayer().setOnErrorListener(mErrorListener);
-        getSystemMediaPlayer().setOnPreparedListener(mPreparedListener);
-        getSystemMediaPlayer().setOnSeekCompleteListener(mSeekCompleteListener);
-        getSystemMediaPlayer().setOnVideoSizeChangedListener(mVideoSizeChangedListener);
+        mMediaPlayer.setOnBufferingUpdateListener(mBufferingUpdateListener);
+        mMediaPlayer.setOnCompletionListener(mCompletionListener);
+        mMediaPlayer.setOnErrorListener(mErrorListener);
+        mMediaPlayer.setOnPreparedListener(mPreparedListener);
+        mMediaPlayer.setOnSeekCompleteListener(mSeekCompleteListener);
+        mMediaPlayer.setOnVideoSizeChangedListener(mVideoSizeChangedListener);
     }
 
     private void startExoPlayer(Uri uri, Map<String, String> headers) {
@@ -740,12 +745,10 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             activity.setRequestedOrientation(requestedOrientation);
         }
 
-        if (mEnableExoPlayer) {
-            if (player != null) {
-                player.setSurface(mSurfaceView.getHolder().getSurface());
-            }
-        } else {
-//            getSystemMediaPlayer().setSurface(mSurfaceView.getHolder().getSurface());
+        if (player != null) {
+            player.setSurface(mSurfaceView.getHolder().getSurface());
+        } else if (mMediaPlayer != null) {
+            mMediaPlayer.setSurface(mSurfaceView.getHolder().getSurface());
         }
         mIsFullscreen = true;
     }
@@ -766,8 +769,12 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
      */
     public void onHideCustomView() {
         if (!mEnableFullscreen || !mIsFullscreen) return;
-        if (mEnableExoPlayer && player != null) {
+        if (player != null) {
             player.setBackgrounded(true);
+        } else if (mMediaPlayer != null) {
+            // clear surface
+//            mMediaPlayer.setSurface(null);
+//            resetSurfaceView();
         }
 
         XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
@@ -791,14 +798,13 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         mediaController.hide();
         mIsFullscreen = false;
 
-        if (mEnableExoPlayer) {
-            if (player != null) {
-//        player.setSurface(xwalkSurface);
-                player.setBackgrounded(false);
-                player.setPlayWhenReady(false);
-            }
-        } else {
-            getSystemMediaPlayer().pause();
+        if (player != null) {
+//            player.setSurface(xwalkSurface);
+            player.setBackgrounded(false);
+            player.setPlayWhenReady(false);
+        } else if (mMediaPlayer != null) {
+//            mMediaPlayer.setSurface(xwalkSurface);
+            mMediaPlayer.pause();
         }
     }
 
@@ -850,5 +856,11 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     public void enableExoPlayer(boolean exoPlayer) {
         mEnableExoPlayer = exoPlayer;
+    }
+
+    private void resetSurfaceView() {
+        Canvas canvas = mSurfaceView.getHolder().lockCanvas();
+        canvas.drawColor(Color.BLACK);
+        mSurfaceView.getHolder().unlockCanvasAndPost(canvas);
     }
 }
