@@ -661,7 +661,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     }
 
     private void showControls() {
-        mediaController.show(0);
+        mediaController.show(1000 * 2);
     }
 
     /**
