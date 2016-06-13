@@ -37,7 +37,6 @@ import android.view.ViewGroup;
 import android.view.accessibility.CaptioningManager;
 import android.widget.FrameLayout;
 import android.widget.MediaController;
-import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import com.google.android.exoplayer.ExoPlaybackException;
@@ -141,7 +140,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             mSystemMediaPlayer = true;
             setSystemListener();
 
-            mXWalkPlayerControl = new XWalkPlayerControl(mMediaPlayer);
+            mXWalkPlayerControl = new XWalkPlayerControl(mMediaPlayer, mContext);
             mediaController.setMediaPlayer(mXWalkPlayerControl);
             mediaController.setEnabled(true);
             Log.e(TAG, "Create a Android System Media Player");
@@ -397,12 +396,14 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     }
 
     private void setSystemListener() {
-        mMediaPlayer.setOnBufferingUpdateListener(mBufferingUpdateListener);
-        mMediaPlayer.setOnCompletionListener(mCompletionListener);
-        mMediaPlayer.setOnErrorListener(mErrorListener);
-        mMediaPlayer.setOnPreparedListener(mPreparedListener);
-        mMediaPlayer.setOnSeekCompleteListener(mSeekCompleteListener);
-        mMediaPlayer.setOnVideoSizeChangedListener(mVideoSizeChangedListener);
+        MediaPlayerListener mediaPlayerListener = new MediaPlayerListener();
+        mMediaPlayer.setOnBufferingUpdateListener(mediaPlayerListener);
+        mMediaPlayer.setOnCompletionListener(mediaPlayerListener);
+        mMediaPlayer.setOnErrorListener(mediaPlayerListener);
+        mMediaPlayer.setOnPreparedListener(mediaPlayerListener);
+        mMediaPlayer.setOnSeekCompleteListener(mediaPlayerListener);
+        mMediaPlayer.setOnVideoSizeChangedListener(mediaPlayerListener);
+        mMediaPlayer.setOnInfoListener(mediaPlayerListener);
     }
 
     private void startExoPlayer(Uri uri, Map<String, String> headers) {
@@ -471,6 +472,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         if (player != null) {
 //            debugViewHelper.stop();
 //            debugViewHelper = null;
+            player.getPlayerControl().release();
             player.release();
             player = null;
             eventLogger.endSession();
@@ -485,12 +487,15 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void onStateChanged(boolean playWhenReady, int playbackState) {
         if (playbackState == ExoPlayer.STATE_ENDED) {
             showControls();
+            showReplayButton(true);
         }
         String text = "playWhenReady=" + playWhenReady + ", playbackState=";
         switch(playbackState) {
             case ExoPlayer.STATE_BUFFERING:
                 text += "buffering";
                 mBufferingUpdateListener.onBufferingUpdate(null, player.getBufferedPercentage());
+                showWaitingBar(true);
+                showReplayButton(false);
                 break;
             case ExoPlayer.STATE_ENDED:
                 text += "ended";
@@ -501,10 +506,13 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
                 break;
             case ExoPlayer.STATE_PREPARING:
                 text += "preparing";
+                showWaitingBar(true);
+                showReplayButton(false);
                 break;
             case ExoPlayer.STATE_READY:
                 text += "ready";
                 mPreparedListener.onPrepared(null);
+                showWaitingBar(false);
                 break;
             default:
                 text += "unknown";
@@ -763,6 +771,21 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         });
     }
 
+    @JavascriptInterface
+    public void onWaitingFromJS() {
+        ThreadUtils.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                showWaitingBar(true);
+            }
+        });
+    }
+
+    @JavascriptInterface
+    public void printWithJavaScript(String log) {
+        Log.d(TAG, "====printWithJavaScript " + log);
+    }
+
     /**
      * Notify the host application that the current page would
      * like to hide its custom view.
@@ -796,6 +819,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
 //        mSurfaceView.setVisibility(View.INVISIBLE);
         mediaController.hide();
+        showWaitingBar(false);
+        showReplayButton(false);
         mIsFullscreen = false;
 
         if (player != null) {
@@ -811,6 +836,12 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void setBackgrounded(boolean background) {
         if (player != null) {
             player.setBackgrounded(background);
+        }
+    }
+
+    public void setPlayWhenReady(boolean playWhenReady) {
+        if (player != null) {
+            player.setPlayWhenReady(playWhenReady);
         }
     }
 
@@ -862,5 +893,83 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         Canvas canvas = mSurfaceView.getHolder().lockCanvas();
         canvas.drawColor(Color.BLACK);
         mSurfaceView.getHolder().unlockCanvasAndPost(canvas);
+    }
+
+    private void showWaitingBar(boolean show) {
+        XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
+        if (activity != null) {
+            activity.showWaitingBar(show);
+        }
+    }
+
+    private void showReplayButton(boolean show) {
+        XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
+        if (activity != null) {
+            activity.showReplayButton(show);
+        }
+    }
+
+    public class MediaPlayerListener implements MediaPlayer.OnPreparedListener,
+            MediaPlayer.OnCompletionListener,
+            MediaPlayer.OnBufferingUpdateListener,
+            MediaPlayer.OnSeekCompleteListener,
+            MediaPlayer.OnVideoSizeChangedListener,
+            MediaPlayer.OnErrorListener,
+            MediaPlayer.OnInfoListener {
+        static final String TAG = "MediaPlayerListener";
+
+        @Override
+        public boolean onInfo(MediaPlayer mp, int what, int extra) {
+            Log.d(TAG, "=====onInfo " + what);
+            switch (what) {
+                case MediaPlayer.MEDIA_INFO_BUFFERING_START:
+                    showWaitingBar(true);
+                    break;
+                case MediaPlayer.MEDIA_INFO_BUFFERING_END:
+                    showWaitingBar(false);
+                    break;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onError(MediaPlayer mp, int what, int extra) {
+            Log.d(TAG, "=====onError ");
+            return mErrorListener.onError(mp, what, extra);
+        }
+
+        @Override
+        public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+            Log.d(TAG, "=====onVideoSizeChanged ");
+            mVideoSizeChangedListener.onVideoSizeChanged(mp, width, height);
+        }
+
+        @Override
+        public void onSeekComplete(MediaPlayer mp) {
+            Log.d(TAG, "=====onSeekComplete ");
+            mSeekCompleteListener.onSeekComplete(mp);
+        }
+
+        @Override
+        public void onBufferingUpdate(MediaPlayer mp, int percent) {
+//            Log.d(TAG, "=====onBufferingUpdate " + percent);
+            mBufferingUpdateListener.onBufferingUpdate(mp, percent);
+            showReplayButton(false);
+        }
+
+        @Override
+        public void onCompletion(MediaPlayer mp) {
+            Log.d(TAG, "=====onCompletion ");
+            mCompletionListener.onCompletion(mp);
+            showReplayButton(true);
+        }
+
+        @Override
+        public void onPrepared(MediaPlayer mp) {
+            Log.d(TAG, "=====onPrepared ");
+            mPreparedListener.onPrepared(mp);
+            showWaitingBar(false);
+            showReplayButton(false);
+        }
     }
 }

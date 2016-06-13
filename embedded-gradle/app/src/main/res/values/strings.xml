@@ -45,4 +45,6 @@
     <string name="error_instantiating_decoder">Unable to instantiate decoder </string>
 
     <string name="storage_permission_denied">Permission to access storage was denied</string>
+
+    <string name="button_replay">重新播放</string>
 </resources>

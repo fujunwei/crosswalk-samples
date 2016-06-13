@@ -5,7 +5,7 @@
         android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_exitfullscreen" android:title="Exit Fullscreen"
         android:orderInCategory="100" app:showAsAction="never" />
-    <item android:id="@+id/action_baidu" android:title="@string/load_baidu"
+    <item android:id="@+id/action_systemMediaPlayer" android:title="System MediaPlayer"
         android:orderInCategory="100" app:showAsAction="never" />
     <item android:id="@+id/action_video" android:title="@string/load_video"
         android:orderInCategory="100" app:showAsAction="never" />

@@ -1,14 +1,70 @@
 var videos = document.getElementsByTagName("video");
+var playingIndex;
 function listenVideos() {
     for (var i = 0; i < videos.length; i++) {
-        videos[i].onplaying = function() {
+        videos[i].oncanplay = function() {
+            window.xwalkExoPlayer.printWithJavaScript("oncanplay");
+        };
+        videos[i].oncanplaythrough = function() {
+            window.xwalkExoPlayer.printWithJavaScript("oncanplaythrough");
+        };
+        videos[i].ondurationchange = function() {
+            window.xwalkExoPlayer.printWithJavaScript("ondurationchange");
+        };
+        videos[i].onended = function() {
+            //Remove DIV
             var videoIndex = getVideoIndex(this);
             var playerDiv = document.getElementById("xwalkVideo" + videoIndex);
             if (playerDiv != null) {
                 // Hide original div
                 document.body.removeChild(playerDiv);
             }
+            window.xwalkExoPlayer.printWithJavaScript("onended");
+        };
+        videos[i].onerror = function() {
+            window.xwalkExoPlayer.printWithJavaScript("onerror");
+        };
+//        videos[i].onloadeddata = function() {
+//            window.xwalkExoPlayer.printWithJavaScript("onloadeddata");
+//        };
+//        videos[i].onloadedmetadata = function() {
+//            window.xwalkExoPlayer.printWithJavaScript("onloadedmetadata");
+//        };
+//        videos[i].onloadstart = function() {
+//            window.xwalkExoPlayer.printWithJavaScript("onloadstart");
+//        };
+//        videos[i].onpause = function() {
+//            window.xwalkExoPlayer.printWithJavaScript("onpause");
+//        };
+        videos[i].onplay = function() {
+            var videoIndex = getVideoIndex(this);
+            playingIndex = videoIndex;
+            var playerDiv = document.getElementById("xwalkVideo" + videoIndex);
+            if (playerDiv != null) {
+                // Hide original div
+                document.body.removeChild(playerDiv);
+            }
             showDiv(videoIndex);
+            window.xwalkExoPlayer.printWithJavaScript("onplay");
+        };
+        videos[i].onplaying = function() {
+            window.xwalkExoPlayer.printWithJavaScript("onplaying");
+        };
+//        videos[i].onseeked = function() {
+//            window.xwalkExoPlayer.printWithJavaScript("onseeked");
+//        };
+//        videos[i].onseeking = function() {
+//            window.xwalkExoPlayer.printWithJavaScript("onseeking");
+//        };
+//        videos[i].onstalled = function() {
+//            window.xwalkExoPlayer.printWithJavaScript("onstalled");
+//        };
+//        videos[i].onsuspend = function() {
+//            window.xwalkExoPlayer.printWithJavaScript("onsuspend");
+//        };
+        videos[i].onwaiting = function() {
+            window.xwalkExoPlayer.printWithJavaScript("onwaiting");
+            window.xwalkExoPlayer.onWaitingFromJS();
         };
     }
     window.addEventListener("resize", resizeVideos);
@@ -21,7 +77,7 @@ function showDiv(index) {
     obj.style.height = rect.offsetHeight + "px"
     obj.style.position = "absolute"
     obj.style.zIndex = "999"
-    obj.style.background = "black"
+//    obj.style.background = "black"
 //        obj.filter = "alpha(Opacity=80);-moz-opacity:0.8;opacity: 0.8;z-index:20000; background-color:#ffffff";
     obj.style.top = rect.absoluteTop + "px"
     obj.style.left = rect.absoluteLeft + "px"
@@ -45,6 +101,7 @@ function resizeVideos() {
     for (var i = 0; i < videos.length; i++) {
         var playerDiv = document.getElementById("xwalkVideo" + i);
         if (playerDiv != null) {
+            document.body.removeChild(playerDiv);
             showDiv(i);
         }
     }
@@ -78,5 +135,11 @@ function getAbsoluteLocationEx(element) {
     console.log("====getAbsoluteLocationEx " + offsetTop + " " + offsetLeft + " " + offsetWidth + " " + offsetHeight)
     return {absoluteTop:offsetTop, absoluteLeft:offsetLeft,
             offsetWidth:offsetWidth, offsetHeight:offsetHeight};
+}
+function replayVideo() {
+    window.xwalkExoPlayer.printWithJavaScript("replayVideo " + playingIndex);
+    var currentVideo = videos[playingIndex];
+    currentVideo.currentTime = 0;
+    currentVideo.play();
 }
 listenVideos();

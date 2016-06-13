@@ -16,10 +16,28 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Hello World!" /-->
+
     <SurfaceView android:id="@+id/surface_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"/>
+
+    <ProgressBar
+        android:id="@+id/waitingBar"
+        style="@android:style/Widget.ProgressBar.Large.Inverse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_centerInParent="true"
+        android:background="@android:color/transparent" />
+
+    <Button
+        android:id="@+id/replayButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/button_replay"
+        android:layout_gravity="center"
+        android:layout_centerInParent="true" />
 
     <org.xwalk.core.XWalkView android:id="@+id/xwalkWebView"
         xmlns:android="http://schemas.android.com/apk/res/android"

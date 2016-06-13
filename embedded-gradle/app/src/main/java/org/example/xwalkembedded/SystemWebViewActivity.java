@@ -87,7 +87,7 @@ public class SystemWebViewActivity extends AppCompatActivity {
         } else if (id == R.id.action_exitfullscreen) {
 //            updateNewProxy();
             setProxyKK(this, "child-p.intel.com", 912);
-        } else if (id == R.id.action_baidu) {
+        } else if (id == R.id.action_systemMediaPlayer) {
             mSystemWebView.loadUrl("http://www.baidu.com/");
         } else if (id == R.id.action_video) {
             mSystemWebView.loadUrl("file:///android_asset/video.html");//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html

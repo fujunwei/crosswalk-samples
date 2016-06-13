@@ -42,6 +42,8 @@ import java.util.Locale;
 
 import android.util.ArrayMap;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.VideoView;
 
 import com.google.android.exoplayer.audio.AudioCapabilities;
@@ -55,6 +57,8 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
     private SocketProxy mSocketProxy;
 
     private SurfaceView surfaceView;
+    private ProgressBar waitingBar;
+    private Button replayButton;
     private XWalkExoMediaPlayer mXWalkExoMediaPlayer;
     private AndroidMediaPlayer mAndroidMediaPlayer;
 
@@ -84,6 +88,15 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 
         mXWalkView = (XWalkView) findViewById(R.id.xwalkWebView);
         surfaceView = (SurfaceView) findViewById(R.id.surface_view);
+        waitingBar = (ProgressBar) findViewById(R.id.waitingBar);
+        replayButton = (Button) findViewById(R.id.replayButton);
+        replayButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Do something in response to button click
+                mXWalkView.evaluateJavascript("replayVideo()", null);
+                mXWalkExoMediaPlayer.setPlayWhenReady(true);
+            }
+        });
 //        mXWalkView.setUIClient(new XWalkUIClient(mXWalkView) {
 //            @Override
 //            public void onGeolocationPermissionsShowPrompt(XWalkView view, String origin,
@@ -159,7 +172,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 //            setProxyKK(this, "122.96.25.242", 9399); // Error proxy ip child-p.intel.com:912
 //            mXWalkView.proxySettingsChanged("", 9396, "", null);
             mXWalkExoMediaPlayer.resetSystemFullscreen();
-        } else if (id == R.id.action_baidu) {
+        } else if (id == R.id.action_systemMediaPlayer) {
 //            if (mProxy == null) {
 //                mProxy = new StreamProxy();
 //                mProxy.init();
@@ -189,7 +202,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 //            mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
 
             //http://120.52.73.7/103.38.59.16/youku/6572A850BE73078284C1F593A/03002001005721B16ECE05003E88037E969A53-228F-72D7-A8C5-B434E9A4547F.mp4
-            playWithExoPlayer(Uri.parse("file:///android_asset/img/FE08D8DD76C824F0AAD83CC5A8064A35_20160529_1_1_386.mp4"));
+            playWithExoPlayer(Uri.parse("http://k.youku.com/player/getFlvPath/sid/446517697800112957f34_00/st/mp4/fileid/0300080A0056FCA666C35E2BEEFCF99A5FAF56-554A-D894-0E24-C0C3D42BFEA2?K=1fcd6adc8d8df60a261f0d18&hd=1&myp=0&ts=372.4&ypp=0&ymovie=1&ep=diaSH0iKUMcH7SPfiT8bbinlInQLXP4J9h%2BFidITALshTp7M6DjXwe6zS4pAZIxsBFFwGeKArqaWHEUSYfVGrRkQq0ahPfrgi%2FLn5d5Tt5N0YhtEBLimtlScQjD4&ctype=12&ev=1&token=2109&oip=2362388343"));
         } else if (id == R.id.action_enableProxy) {
 //            mXWalkExoMediaPlayer.updateProxySetting("122.96.25.242", 9399);
             mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
@@ -271,6 +284,26 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 
 //            appbar.setVisibility(View.VISIBLE);
             mXWalkView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public void showWaitingBar(boolean show) {
+        // Show waiting progress bar
+        if (show) {
+            waitingBar.setVisibility(View.VISIBLE);
+            showReplayButton(false);
+        } else {
+            waitingBar.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    public void showReplayButton(boolean show) {
+        // Show waiting progress bar
+        if (show) {
+            replayButton.setVisibility(View.VISIBLE);
+            showWaitingBar(false);
+        } else {
+            replayButton.setVisibility(View.INVISIBLE);
         }
     }
 

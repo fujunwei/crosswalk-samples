@@ -1,10 +1,14 @@
 package org.example.player;
 
+import android.app.Activity;
+import android.content.Context;
 import android.media.MediaPlayer;
 import android.widget.MediaController;
 
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.util.PlayerControl;
+
+import org.example.xwalkembedded.XWalkWebViewActivity;
 
 /**
  * Created by junweifu on 5/29/2016.
@@ -12,13 +16,15 @@ import com.google.android.exoplayer.util.PlayerControl;
 public class XWalkPlayerControl implements MediaController.MediaPlayerControl {
     ExoPlayer exoPlayer;
     MediaPlayer mediaPlayer;
+    Context context;
 
     public XWalkPlayerControl(ExoPlayer exoPlayer) {
         this.exoPlayer = exoPlayer;
     }
 
-    public XWalkPlayerControl(MediaPlayer mediaPlayer) {
+    public XWalkPlayerControl(MediaPlayer mediaPlayer, Context context) {
         this.mediaPlayer = mediaPlayer;
+        this.context = context;
     }
 
     public boolean canPause() {
@@ -95,6 +101,11 @@ public class XWalkPlayerControl implements MediaController.MediaPlayerControl {
         } else if (mediaPlayer != null) {
             int seekPosition = Math.min(Math.max(0, timeMillis), this.getDuration());
             mediaPlayer.seekTo(seekPosition);
+
+            // Display waiting progress bar
+            if (context != null && context instanceof Activity) {
+                ((XWalkWebViewActivity) context).showWaitingBar(true);
+            }
         }
     }
 
