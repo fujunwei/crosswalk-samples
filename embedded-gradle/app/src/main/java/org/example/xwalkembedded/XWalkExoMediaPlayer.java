@@ -143,7 +143,13 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             mXWalkPlayerControl = new XWalkPlayerControl(mMediaPlayer, mContext);
             mediaController.setMediaPlayer(mXWalkPlayerControl);
             mediaController.setEnabled(true);
-            Log.e(TAG, "Create a Android System Media Player");
+
+            try {
+                mMediaPlayer.setDataSource(mContext, contentUri, mHeaders);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Log.e(TAG, "Create a Android System Media Player" + contentUri.toString());
         }
     }
 
@@ -201,14 +207,10 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public void setDataSource(Context context, Uri uri, Map<String, String> headers) {
         Log.d(TAG, "==== in setDataSource " + uri);
+        contentUri = uri;
+        mHeaders = headers;
         if (!mEnableExoPlayer || uri.getScheme().equals("file")) {
             startSystemMediaPlayer();
-
-            try {
-                mMediaPlayer.setDataSource(context, uri, headers);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         } else {
             startExoPlayer(uri, headers);
         }
@@ -220,7 +222,28 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     }
 
     @Override
+    public void setDataSource (Context context, Uri uri) {
+        Log.d(TAG, "==== in setDataSource " + uri);
+        Map<String, String> headers = new HashMap<String, String>();
+        headers.put("User-Agent", "Crosswalk");
+        contentUri = uri;
+        mHeaders = headers;
+
+        // The data URI will be saved into cache temp.
+        // file:///data/data/org.example.xwalkembedded/cache/decoded577794378mediadata
+        if (!mEnableExoPlayer || uri.getScheme().equals("file")) {
+            startSystemMediaPlayer();
+        } else {
+            startExoPlayer(uri, headers);
+        }
+
+        // Default is custom full screen
+        onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+    }
+
+    @Override
     public void setDataSource(FileDescriptor fd, long offset, long length) {
+        Log.d(TAG, "=====setDataSource FileDescriptor ");
         startSystemMediaPlayer();
 
         try {
@@ -228,29 +251,6 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void setDataSource (Context context, Uri uri) {
-        Log.d(TAG, "==== in setDataSource " + uri);
-        Map<String, String> headers = new HashMap<String, String>();
-        headers.put("User-Agent", "Crosswalk");
-
-        // The data URI will be saved into cache temp.
-        // file:///data/data/org.example.xwalkembedded/cache/decoded577794378mediadata
-        if (!mEnableExoPlayer || uri.getScheme().equals("file")) {
-            startSystemMediaPlayer();
-            try {
-                mMediaPlayer.setDataSource(context, uri);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            startExoPlayer(uri, headers);
-        }
-
-        // Default is custom full screen
-        onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
     }
 
     @Override
@@ -330,10 +330,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         Log.d(TAG, "==== in start ");
         if (mSystemMediaPlayer && mMediaPlayer != null) {
             mMediaPlayer.start();
-        } else if (player != null){
+        } else if (player != null) {
             player.setPlayWhenReady(true);
         }
-        onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
     }
 
     @Override
@@ -407,12 +406,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     }
 
     private void startExoPlayer(Uri uri, Map<String, String> headers) {
-        contentUri = uri;//Uri.parse("http://122.96.25.242:8088/war.mp4");//uri;
         contentType = inferContentType(contentUri, "");
         contentId = "Demo Testing".toLowerCase(Locale.US).replaceAll("\\s", "");
         provider = "";
-
-        mHeaders = headers;
 
         mSystemMediaPlayer = false;
         // Release exoplayer to play new uri
@@ -487,7 +483,6 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     public void onStateChanged(boolean playWhenReady, int playbackState) {
         if (playbackState == ExoPlayer.STATE_ENDED) {
             showControls();
-            showReplayButton(true);
         }
         String text = "playWhenReady=" + playWhenReady + ", playbackState=";
         switch(playbackState) {
@@ -523,8 +518,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     @Override
     public void onError(Exception e) {
-        Log.d(TAG, "====onError ");
-        String errorString = null;
+        String errorString = mContext.getString(R.string.play_failed);
         if (e instanceof UnsupportedDrmException) {
             // Special case DRM failures.
             UnsupportedDrmException unsupportedDrmException = (UnsupportedDrmException) e;
@@ -554,10 +548,13 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         if (errorString != null) {
             Toast.makeText(mContext.getApplicationContext(), errorString, Toast.LENGTH_LONG).show();
         }
+        Log.d(TAG, "====onError " + errorString);
         playerNeedsPrepare = true;
         showControls();
 
-        mErrorListener.onError(null, MediaPlayer.MEDIA_ERROR_UNKNOWN, MediaPlayer.MEDIA_ERROR_UNSUPPORTED);
+        mErrorListener.onError(null, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_TIMED_OUT);
+        showWaitingBar(false);
+        showReplayButton(true);
     }
 
     @Override
@@ -766,7 +763,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         ThreadUtils.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                start();
+                onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             }
         });
     }
@@ -777,6 +774,16 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
             @Override
             public void run() {
                 showWaitingBar(true);
+            }
+        });
+    }
+
+    @JavascriptInterface
+    public void showReplayButtonFromJS() {
+        ThreadUtils.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                showReplayButton(true);
             }
         });
     }
@@ -826,11 +833,10 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         if (player != null) {
 //            player.setSurface(xwalkSurface);
             player.setBackgrounded(false);
-            player.setPlayWhenReady(false);
         } else if (mMediaPlayer != null) {
 //            mMediaPlayer.setSurface(xwalkSurface);
-            mMediaPlayer.pause();
         }
+        mXWalkView.evaluateJavascript("pauseVideo()", null);
     }
 
     public void setBackgrounded(boolean background) {
@@ -839,9 +845,11 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         }
     }
 
-    public void setPlayWhenReady(boolean playWhenReady) {
+    public void replayVideo() {
         if (player != null) {
-            player.setPlayWhenReady(playWhenReady);
+            preparePlayer(true);
+        } else if (mMediaPlayer != null) {
+            mMediaPlayer.start();
         }
     }
 
@@ -928,6 +936,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
                 case MediaPlayer.MEDIA_INFO_BUFFERING_END:
                     showWaitingBar(false);
                     break;
+                case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
+                    showReplayButton(false);
+                    break;
             }
             return true;
         }
@@ -947,6 +958,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         @Override
         public void onSeekComplete(MediaPlayer mp) {
             Log.d(TAG, "=====onSeekComplete ");
+            showWaitingBar(false);
             mSeekCompleteListener.onSeekComplete(mp);
         }
 
@@ -954,14 +966,12 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         public void onBufferingUpdate(MediaPlayer mp, int percent) {
 //            Log.d(TAG, "=====onBufferingUpdate " + percent);
             mBufferingUpdateListener.onBufferingUpdate(mp, percent);
-            showReplayButton(false);
         }
 
         @Override
         public void onCompletion(MediaPlayer mp) {
             Log.d(TAG, "=====onCompletion ");
             mCompletionListener.onCompletion(mp);
-            showReplayButton(true);
         }
 
         @Override

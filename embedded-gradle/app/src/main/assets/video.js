@@ -13,15 +13,13 @@ function listenVideos() {
         };
         videos[i].onended = function() {
             //Remove DIV
-            var videoIndex = getVideoIndex(this);
-            var playerDiv = document.getElementById("xwalkVideo" + videoIndex);
-            if (playerDiv != null) {
-                // Hide original div
-                document.body.removeChild(playerDiv);
-            }
+            hideDiv(getVideoIndex(this));
+            window.xwalkExoPlayer.showReplayButtonFromJS();
             window.xwalkExoPlayer.printWithJavaScript("onended");
         };
         videos[i].onerror = function() {
+            //Remove DIV
+            hideDiv(getVideoIndex(this));
             window.xwalkExoPlayer.printWithJavaScript("onerror");
         };
 //        videos[i].onloadeddata = function() {
@@ -37,17 +35,13 @@ function listenVideos() {
 //            window.xwalkExoPlayer.printWithJavaScript("onpause");
 //        };
         videos[i].onplay = function() {
-            var videoIndex = getVideoIndex(this);
-            playingIndex = videoIndex;
-            var playerDiv = document.getElementById("xwalkVideo" + videoIndex);
-            if (playerDiv != null) {
-                // Hide original div
-                document.body.removeChild(playerDiv);
-            }
-            showDiv(videoIndex);
             window.xwalkExoPlayer.printWithJavaScript("onplay");
         };
         videos[i].onplaying = function() {
+            var videoIndex = getVideoIndex(this);
+            playingIndex = videoIndex;
+            hideDiv(videoIndex);
+            showDiv(videoIndex);
             window.xwalkExoPlayer.printWithJavaScript("onplaying");
         };
 //        videos[i].onseeked = function() {
@@ -77,7 +71,7 @@ function showDiv(index) {
     obj.style.height = rect.offsetHeight + "px"
     obj.style.position = "absolute"
     obj.style.zIndex = "999"
-//    obj.style.background = "black"
+    obj.style.background = "black"
 //        obj.filter = "alpha(Opacity=80);-moz-opacity:0.8;opacity: 0.8;z-index:20000; background-color:#ffffff";
     obj.style.top = rect.absoluteTop + "px"
     obj.style.left = rect.absoluteLeft + "px"
@@ -94,8 +88,17 @@ function showDiv(index) {
     document.body.appendChild(obj);
     img.onclick = function() {
 //            alert("click on video element");
+        playVideo();
         window.xwalkExoPlayer.enterFullscreen();
     };
+}
+function hideDiv(index) {
+    //Remove DIV
+    var playerDiv = document.getElementById("xwalkVideo" + index);
+    if (playerDiv != null) {
+        // Hide original div
+        document.body.removeChild(playerDiv);
+    }
 }
 function resizeVideos() {
     for (var i = 0; i < videos.length; i++) {
@@ -141,5 +144,15 @@ function replayVideo() {
     var currentVideo = videos[playingIndex];
     currentVideo.currentTime = 0;
     currentVideo.play();
+}
+function playVideo() {
+    window.xwalkExoPlayer.printWithJavaScript("playVideo " + playingIndex);
+    var currentVideo = videos[playingIndex];
+    currentVideo.play();
+}
+function pauseVideo() {
+    window.xwalkExoPlayer.printWithJavaScript("pauseVideo " + playingIndex);
+    var currentVideo = videos[playingIndex];
+    currentVideo.pause();
 }
 listenVideos();

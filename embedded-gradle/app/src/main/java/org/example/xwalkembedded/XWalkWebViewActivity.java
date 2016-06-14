@@ -61,6 +61,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
     private Button replayButton;
     private XWalkExoMediaPlayer mXWalkExoMediaPlayer;
     private AndroidMediaPlayer mAndroidMediaPlayer;
+    boolean mEnableFullscreen;
 
     private AudioCapabilitiesReceiver audioCapabilitiesReceiver;
 
@@ -94,7 +95,8 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
             public void onClick(View v) {
                 // Do something in response to button click
                 mXWalkView.evaluateJavascript("replayVideo()", null);
-                mXWalkExoMediaPlayer.setPlayWhenReady(true);
+                mXWalkExoMediaPlayer.replayVideo();
+                replayButton.setVisibility(View.INVISIBLE);
             }
         });
 //        mXWalkView.setUIClient(new XWalkUIClient(mXWalkView) {
@@ -133,6 +135,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
             @Override
             public void onDocumentLoadedInFrame(XWalkView view, long frameId) {
                 Log.d(TAG, "=====in onDocumentLoadedInFrame");
+                if (mEnableFullscreen) return;
                 mXWalkView.evaluateJavascript(getFromAssets("video.js"), null);
             }
         });
@@ -172,6 +175,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 //            setProxyKK(this, "122.96.25.242", 9399); // Error proxy ip child-p.intel.com:912
 //            mXWalkView.proxySettingsChanged("", 9396, "", null);
             mXWalkExoMediaPlayer.resetSystemFullscreen();
+            mEnableFullscreen = !mEnableFullscreen;
         } else if (id == R.id.action_systemMediaPlayer) {
 //            if (mProxy == null) {
 //                mProxy = new StreamProxy();
