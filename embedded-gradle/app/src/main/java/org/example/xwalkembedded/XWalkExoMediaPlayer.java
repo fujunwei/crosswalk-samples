@@ -134,6 +134,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     }
 
     private void startSystemMediaPlayer() {
+        releaseSystemMediaPlayer();
+
         if (mMediaPlayer == null) {
             mMediaPlayer = new MediaPlayer();
 
@@ -209,7 +211,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         Log.d(TAG, "==== in setDataSource " + uri);
         contentUri = uri;
         mHeaders = headers;
-        if (!mEnableExoPlayer || uri.getScheme().equals("file")) {
+        if (!mEnableExoPlayer) {
             startSystemMediaPlayer();
         } else {
             startExoPlayer(uri, headers);
@@ -224,14 +226,19 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public void setDataSource (Context context, Uri uri) {
         Log.d(TAG, "==== in setDataSource " + uri);
+        String lastPathSegment = uri.getLastPathSegment();
+        // The data URI will be saved into cache temp.
+        // file:///data/data/org.example.xwalkembedded/cache/decoded577794378mediadata
+        if (uri.getScheme().equals("file") && lastPathSegment.startsWith("decoded")) {
+            return;
+        }
+
         Map<String, String> headers = new HashMap<String, String>();
         headers.put("User-Agent", "Crosswalk");
         contentUri = uri;
         mHeaders = headers;
 
-        // The data URI will be saved into cache temp.
-        // file:///data/data/org.example.xwalkembedded/cache/decoded577794378mediadata
-        if (!mEnableExoPlayer || uri.getScheme().equals("file")) {
+        if (!mEnableExoPlayer) {
             startSystemMediaPlayer();
         } else {
             startExoPlayer(uri, headers);
@@ -412,9 +419,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
         mSystemMediaPlayer = false;
         // Release exoplayer to play new uri
-        if (player != null) {
-            releasePlayer();
-        }
+        releasePlayer();
         // Prepare exoplayer
         preparePlayer(true);
     }
