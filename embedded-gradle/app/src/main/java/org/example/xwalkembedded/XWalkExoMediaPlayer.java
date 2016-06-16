@@ -1,6 +1,5 @@
 package org.example.xwalkembedded;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
@@ -9,15 +8,10 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.Surface;
 
-//import org.example.player.ExoMediaPlayer;
-import org.apache.http.util.EncodingUtils;
 import org.chromium.base.ThreadUtils;
 import org.example.player.DashRendererBuilder;
 import org.example.player.DemoPlayer;
@@ -33,9 +27,6 @@ import android.media.MediaPlayer;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.accessibility.CaptioningManager;
-import android.widget.FrameLayout;
 import android.widget.MediaController;
 import android.widget.Toast;
 
@@ -43,29 +34,18 @@ import com.google.android.exoplayer.ExoPlaybackException;
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.MediaCodecTrackRenderer;
 import com.google.android.exoplayer.MediaCodecUtil;
-import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.drm.UnsupportedDrmException;
 import com.google.android.exoplayer.metadata.id3.GeobFrame;
 import com.google.android.exoplayer.metadata.id3.Id3Frame;
 import com.google.android.exoplayer.metadata.id3.PrivFrame;
 import com.google.android.exoplayer.metadata.id3.TxxxFrame;
-import com.google.android.exoplayer.text.CaptionStyleCompat;
-import com.google.android.exoplayer.text.Cue;
-import com.google.android.exoplayer.text.SubtitleLayout;
 import com.google.android.exoplayer.util.DebugTextViewHelper;
-import com.google.android.exoplayer.util.MimeTypes;
 import com.google.android.exoplayer.util.Util;
-import com.google.android.exoplayer.util.VerboseLogUtil;
-
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -671,6 +651,9 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     }
 
     private void showControls() {
+        // Don't do anything if both of mediaplayer were released.
+        if (player == null && mMediaPlayer == null) return;
+
         mediaController.show(1000 * 2);
     }
 
@@ -841,7 +824,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         } else if (mMediaPlayer != null) {
 //            mMediaPlayer.setSurface(xwalkSurface);
         }
-        mXWalkView.evaluateJavascript("pauseVideo()", null);
+        mXWalkView.evaluateJavascript("xwalk.pauseVideo()", null);
     }
 
     public void setBackgrounded(boolean background) {

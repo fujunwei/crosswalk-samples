@@ -42,6 +42,7 @@ import java.util.Locale;
 
 import android.util.ArrayMap;
 import android.view.WindowManager;
+import android.webkit.ValueCallback;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.VideoView;
@@ -94,7 +95,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
         replayButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Do something in response to button click
-                mXWalkView.evaluateJavascript("replayVideo()", null);
+                mXWalkView.evaluateJavascript("xwalk.replayVideo()", null);
                 mXWalkExoMediaPlayer.replayVideo();
                 replayButton.setVisibility(View.INVISIBLE);
             }
@@ -136,7 +137,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
             public void onDocumentLoadedInFrame(XWalkView view, long frameId) {
                 Log.d(TAG, "=====in onDocumentLoadedInFrame");
                 if (mEnableFullscreen) return;
-                mXWalkView.evaluateJavascript(getFromAssets("video.js"), null);
+                listenXWalkVideos();
             }
         });
     }
@@ -206,7 +207,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
 //            mXWalkView.load("file:///android_asset/video.html", null);//http://www.zhangxinxu.com/study/201003/html5-video-mp4.html
 
             //http://120.52.73.7/103.38.59.16/youku/6572A850BE73078284C1F593A/03002001005721B16ECE05003E88037E969A53-228F-72D7-A8C5-B434E9A4547F.mp4
-            playWithExoPlayer(Uri.parse("http://k.youku.com/player/getFlvPath/sid/446517697800112957f34_00/st/mp4/fileid/0300080A0056FCA666C35E2BEEFCF99A5FAF56-554A-D894-0E24-C0C3D42BFEA2?K=1fcd6adc8d8df60a261f0d18&hd=1&myp=0&ts=372.4&ypp=0&ymovie=1&ep=diaSH0iKUMcH7SPfiT8bbinlInQLXP4J9h%2BFidITALshTp7M6DjXwe6zS4pAZIxsBFFwGeKArqaWHEUSYfVGrRkQq0ahPfrgi%2FLn5d5Tt5N0YhtEBLimtlScQjD4&ctype=12&ev=1&token=2109&oip=2362388343"));
+            playWithExoPlayer(Uri.parse("http://dlhls.cdn.zhanqi.tv/zqlive/36596_HD3eX_700/index.m3u8?Dnion_vsnae=36596_HD3eX"));
         } else if (id == R.id.action_enableProxy) {
 //            mXWalkExoMediaPlayer.updateProxySetting("122.96.25.242", 9399);
             mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
@@ -383,6 +384,19 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
             e.printStackTrace();
         }
         return result;
+    }
+
+    private void listenXWalkVideos() {
+        mXWalkView.evaluateJavascript("xwalk.listenedXWalkVideos", new ValueCallback<String>() {
+            @Override
+            public void onReceiveValue(String value) {
+                if (!value.equals("true")) {
+                    mXWalkView.evaluateJavascript(getFromAssets("video.js"), null);
+                    Log.d(TAG, "=====Evaluate javascripte to listen the video element ");
+                }
+                Log.d(TAG, "=====the version of exoplayer video.js is " + value);
+            }
+        });
     }
 
     // from https://stackoverflow.com/questions/19979578/android-webview-set-proxy-programatically-kitkat
