@@ -2,7 +2,7 @@ var xwalk = {
     playingIndex: 0,
     listenedXWalkVideos: false,
     listenVideos: function() {
-		var videos = document.getElementsByTagName("video");
+		var videos = xwalk.getVideos();
         for (var i = 0; i < videos.length; i++) {
             xwalk.listenedXWalkVideos = true;
             videos[i].oncanplay = function() {
@@ -63,8 +63,22 @@ var xwalk = {
         }
         window.addEventListener("resize", xwalk.resizeVideos);
     },
+    getVideos: function() {
+        var videos = document.getElementsByTagName("video");
+        if (videos.length == 0) {
+            var iframes = document.getElementsByTagName("iframe");
+            for (var i = 0; i < iframes.length; i++) {
+                var documentObj = iframes[i].contentWindow;
+                videos = documentObj.document.getElementsByTagName("video");
+                window.xwalkExoPlayer.printWithJavaScript("==== Can't find Videos, so find in iframe for PPTV " + videos.length);
+                // BUGBUG: need to be refined
+                if (videos.length > 0) break;
+            }
+        }
+        return videos;
+    },
     showDiv: function(index) {
-		var videos = document.getElementsByTagName("video");
+		var videos = xwalk.getVideos();
         var rect = xwalk.getAbsoluteLocationEx(videos[index]);
         var obj = document.createElement("div");
         obj.id="xwalkVideo" + index;
@@ -104,7 +118,7 @@ var xwalk = {
         }
     },
     resizeVideos: function() {
-		var videos = document.getElementsByTagName("video");
+		var videos = xwalk.getVideos();
         for (var i = 0; i < videos.length; i++) {
             var playerDiv = document.getElementById("xwalkVideo" + i);
             if (playerDiv != null) {
@@ -114,7 +128,7 @@ var xwalk = {
         }
     },
     getVideoIndex: function(video) {
-		var videos = document.getElementsByTagName("video");
+		var videos = xwalk.getVideos();
         for (var i = 0; i < videos.length; i++) {
             if (videos[i] == video) {
                 return i;
@@ -146,20 +160,20 @@ var xwalk = {
     },
     replayVideo: function() {
         window.xwalkExoPlayer.printWithJavaScript("replayVideo " + xwalk.playingIndex);
-		var videos = document.getElementsByTagName("video");
+		var videos = xwalk.getVideos();
         var currentVideo = videos[xwalk.playingIndex];
         currentVideo.currentTime = 0;
         currentVideo.play();
     },
     playVideo: function() {
         window.xwalkExoPlayer.printWithJavaScript("playVideo " + xwalk.playingIndex);
-		var videos = document.getElementsByTagName("video");
+		var videos = xwalk.getVideos();
         var currentVideo = videos[xwalk.playingIndex];
         currentVideo.play();
     },
     pauseVideo: function() {
         window.xwalkExoPlayer.printWithJavaScript("pauseVideo " + xwalk.playingIndex);
-		var videos = document.getElementsByTagName("video");
+		var videos = xwalk.getVideos();
         var currentVideo = videos[xwalk.playingIndex];
         currentVideo.pause();
         // Show div to cover the video.
