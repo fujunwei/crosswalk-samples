@@ -73,7 +73,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     private String contentId;
     private String provider;
 
-    public static final String PROXY_HOST = "140.207.47.119";
+    public static final String PROXY_HTTP_HOST = "140.207.47.119";
     public static final int PROXY_HTTP_PORT = 10010;
     private String proxyHost;
     private int proxyPort;
@@ -206,6 +206,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public void setDataSource (Context context, Uri uri) {
         Log.d(TAG, "==== in setDataSource " + uri);
+
         String lastPathSegment = uri.getLastPathSegment();
         // The data URI will be saved into cache temp.
         // file:///data/data/org.example.xwalkembedded/cache/decoded577794378mediadata
@@ -297,6 +298,7 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
     @Override
     public void release() {
         Log.d(TAG, "==== in release ");
+
         if (mSystemMediaPlayer) {
             releaseSystemMediaPlayer();
         } else {
@@ -824,6 +826,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
         } else if (mMediaPlayer != null) {
 //            mMediaPlayer.setSurface(xwalkSurface);
         }
+
+        resetSurfaceView();
         mXWalkView.evaluateJavascript("xwalk.pauseVideo()", null);
     }
 
@@ -883,12 +887,40 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     public void enableExoPlayer(boolean exoPlayer) {
         mEnableExoPlayer = exoPlayer;
+        enablePageProxy(exoPlayer);
+    }
+
+    private void enablePageProxy(boolean enable) {
+        String[] a = {"*.intel.com", "*.intel2.com"};
+        if (enable) {
+            mXWalkView.proxySettingsChanged(PROXY_HTTP_HOST, PROXY_HTTP_PORT, "", a);
+        } else {
+            mXWalkView.proxySettingsChanged("", -1, "", a);
+        }
+    }
+
+    public void disablePageProxyForHuyaTV(String resourceUrl) {
+        if (mEnableExoPlayer) {
+            Uri xwalkUri = Uri.parse(mXWalkView.getUrl());
+            Log.d(TAG, "====enable " + mXWalkView.getUrl() + " " + resourceUrl);
+            if (xwalkUri.getHost().equals("m.huya.com")) {
+                if (resourceUrl.contains(".jpg") || resourceUrl.contains(".png")
+                        || resourceUrl.contains(".jpeg") || resourceUrl.contains(".gif")) {
+                    enablePageProxy(true);
+                } else {
+                    enablePageProxy(false);
+                }
+            }
+            // BUGBUG: Must be confirm enable page proxy when starting a new page.
+        }
     }
 
     private void resetSurfaceView() {
         Canvas canvas = mSurfaceView.getHolder().lockCanvas();
-        canvas.drawColor(Color.BLACK);
-        mSurfaceView.getHolder().unlockCanvasAndPost(canvas);
+        if (canvas != null) {
+            canvas.drawColor(Color.BLACK);
+            mSurfaceView.getHolder().unlockCanvasAndPost(canvas);
+        }
     }
 
     private void showWaitingBar(boolean show) {

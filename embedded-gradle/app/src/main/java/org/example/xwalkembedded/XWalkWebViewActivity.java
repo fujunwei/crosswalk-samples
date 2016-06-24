@@ -100,6 +100,7 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
                 replayButton.setVisibility(View.INVISIBLE);
             }
         });
+        replayButton.setVisibility(View.INVISIBLE);
 //        mXWalkView.setUIClient(new XWalkUIClient(mXWalkView) {
 //            @Override
 //            public void onGeolocationPermissionsShowPrompt(XWalkView view, String origin,
@@ -111,9 +112,6 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
         mXWalkExoMediaPlayer = new XWalkExoMediaPlayer(this, mXWalkView, surfaceView);
         mXWalkView.addJavascriptInterface(mXWalkExoMediaPlayer, "xwalkExoPlayer");
         mXWalkExoMediaPlayer.updateProxySetting("140.207.47.119", 10010);
-        String[] a = {"*.intel.com", "*.intel2.com"};
-//            mXWalkView.proxySettingsChanged("122.96.25.242", 9399, "", a);
-        mXWalkView.proxySettingsChanged("140.207.47.119", 10010, "", a);
 
         mAndroidMediaPlayer = new AndroidMediaPlayer(this, mXWalkView, surfaceView);
 
@@ -135,9 +133,15 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
         mXWalkView.setResourceClient(new XWalkResourceClient(mXWalkView) {
             @Override
             public void onDocumentLoadedInFrame(XWalkView view, long frameId) {
-                Log.d(TAG, "=====in onDocumentLoadedInFrame");
+                Log.d(TAG, "=====in onDocumentLoadedInFrame " + mXWalkView.getUserAgentString());
                 if (mEnableFullscreen) return;
                 listenXWalkVideos();
+
+            }
+
+            @Override
+            public void onLoadStarted(XWalkView view, String url) {
+                mXWalkExoMediaPlayer.disablePageProxyForHuyaTV(url);
             }
         });
     }
@@ -174,7 +178,6 @@ public class XWalkWebViewActivity extends AppCompatActivity implements AudioCapa
         } else if (id == R.id.action_exitfullscreen) {
 //            updateNewProxy();
 //            setProxyKK(this, "122.96.25.242", 9399); // Error proxy ip child-p.intel.com:912
-//            mXWalkView.proxySettingsChanged("", 9396, "", null);
             mXWalkExoMediaPlayer.resetSystemFullscreen();
             mEnableFullscreen = !mEnableFullscreen;
         } else if (id == R.id.action_systemMediaPlayer) {
