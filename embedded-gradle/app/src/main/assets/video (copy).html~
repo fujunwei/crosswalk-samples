@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<video width="400" id="local_video" controls>
+  <source src="file:///android_asset/img/mov_bbb.mp4" type="video/mp4">
+  <source src="file:///android_asset/img/mov_bbb.ogg" type="video/ogg">
+  Your browser does not support HTML5 video.
+</video>
+
+<p>
+  Video courtesy of
+  <a href="http://www.bigbuckbunny.org/" target="_blank">Big Buck Bunny</a>.
+</p>
+<video src="img/FE08D8DD76C824F0AAD83CC5A8064A35_20160529_1_1_386.mp4" width="320" height="240" controls autobuffer></video>
+
+</body>
+</html>
+
+<!--script>
+var videos = document.getElementsByTagName("video");
+var i;
+for (i = 0; i < videos.length; i++) {
+	videos[i].onplaying = function() {
+//		alert(this.duration);
+		var rect = getAbsoluteLocationEx(this);
+		var obj = document.createElement("div");
+        obj.id="xwalkVideo";
+        obj.style.width = rect.offsetWidth + "px"
+        obj.style.height = rect.offsetHeight + "px"
+        obj.style.position = "absolute"
+//        obj.style.zIndex = "999"
+//        obj.style.background = "darkblue"
+        obj.filter = "alpha(Opacity=80);-moz-opacity:0.8;opacity: 0.8;z-index:999; background-color:#ffffff";
+        obj.style.top = rect.absoluteTop + "px"
+        obj.style.left = rect.absoluteLeft + "px"
+        obj.innerText = "sdsdsdaf"
+        var img = document.createElement("img");
+        img.src = "file:///android_asset/img/player.png";
+        obj.appendChild(img);
+        document.body.appendChild(obj);
+	};
+}
+function getAbsoluteLocationEx(element) {
+    if(element==null) {
+        return null;
+    }
+    var elmt = element;
+    var offsetTop = elmt.offsetTop;
+    var offsetLeft = elmt.offsetLeft;
+    var offsetWidth = elmt.offsetWidth;
+    var offsetHeight = elmt.offsetHeight;
+    while (elmt = elmt.offsetParent) {
+        // add this judge
+        if(elmt.style.position == 'absolute'|| elmt.style.position == 'relative'
+                ||(elmt.style.overflow != 'visible' && elmt.style.overflow != '')) {
+            break;
+        }
+        offsetTop += elmt.offsetTop;
+        offsetLeft += elmt.offsetLeft;
+    }
+    return {absoluteTop:offsetTop, absoluteLeft:offsetLeft,
+            offsetWidth:offsetWidth, offsetHeight:offsetHeight};
+}
+</script-->

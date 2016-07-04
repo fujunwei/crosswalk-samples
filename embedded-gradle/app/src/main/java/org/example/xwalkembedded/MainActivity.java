@@ -15,7 +15,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         mXWalkView = (XWalkView) findViewById(R.id.activity_main);
-        mXWalkView.load("http://crosswalk-project.org/", null);
+        mXWalkView.load("file:///android_asset/index.html", null);
     }
 
     @Override
