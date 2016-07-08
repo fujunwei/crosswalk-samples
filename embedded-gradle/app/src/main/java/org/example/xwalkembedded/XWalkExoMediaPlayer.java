@@ -6,6 +6,7 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -30,6 +31,7 @@ import android.view.View;
 import android.widget.MediaController;
 import android.widget.Toast;
 
+import com.google.android.exoplayer.BehindLiveWindowException;
 import com.google.android.exoplayer.ExoPlaybackException;
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.MediaCodecTrackRenderer;
@@ -532,17 +534,28 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
                         decoderInitializationException.decoderName);
             }
         }
-        if (errorString != null) {
-            Toast.makeText(mContext.getApplicationContext(), errorString, Toast.LENGTH_LONG).show();
-        }
-        Log.d(TAG, "====onError " + errorString);
         playerNeedsPrepare = true;
-        showControls();
-
-        mErrorListener.onError(null, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_TIMED_OUT);
-        showWaitingBar(false);
-        showReplayButton(true);
+        handler.sendEmptyMessage(1001);
+//        if (errorString != null) {
+//            Toast.makeText(mContext.getApplicationContext(), errorString, Toast.LENGTH_LONG).show();
+//        }
+//        Log.d(TAG, "====onError " + errorString);
+//        showControls();
+//
+//        mErrorListener.onError(null, MediaPlayer.MEDIA_ERROR_SERVER_DIED, MediaPlayer.MEDIA_ERROR_TIMED_OUT);
+//        showWaitingBar(false);
+//        showReplayButton(true);
     }
+
+    private Handler handler = new Handler() {
+
+        // 处理子线程给我们发送的消息。
+        @Override
+        public void handleMessage(android.os.Message msg) {
+            mXWalkView.evaluateJavascript("xwalk.playVideo()", null);
+            replayVideo();
+        };
+    };
 
     @Override
     public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees,
