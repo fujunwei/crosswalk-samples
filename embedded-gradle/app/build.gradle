@@ -33,7 +33,7 @@ dependencies {
 //    compile 'org.xwalk:xwalk_core_library_canary:4.4.0'
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile files('libs/library.jar')
-    compile(name:'xwalk_core_library', ext:'aar')
+    compile(name:'xwalk_shared_library', ext:'aar')
 }
 
 android {

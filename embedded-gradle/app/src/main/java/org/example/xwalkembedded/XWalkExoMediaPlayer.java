@@ -13,7 +13,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
 
-import org.chromium.base.ThreadUtils;
 import org.example.player.DashRendererBuilder;
 import org.example.player.DemoPlayer;
 import org.example.player.ExtractorRendererBuilder;
@@ -763,7 +762,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     @JavascriptInterface
     public void enterFullscreen() {
-        ThreadUtils.runOnUiThread(new Runnable() {
+        XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
+        activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 onShowCustomView(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -773,7 +773,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     @JavascriptInterface
     public void onWaitingFromJS() {
-        ThreadUtils.runOnUiThread(new Runnable() {
+        XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
+        activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 showWaitingBar(true);
@@ -783,7 +784,8 @@ public class XWalkExoMediaPlayer extends XWalkExMediaPlayer implements SurfaceHo
 
     @JavascriptInterface
     public void showReplayButtonFromJS() {
-        ThreadUtils.runOnUiThread(new Runnable() {
+        XWalkWebViewActivity activity = (XWalkWebViewActivity) getActivity();
+        activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 showReplayButton(true);
