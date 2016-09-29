@@ -27,7 +27,7 @@ repositories {
 }
 
 dependencies {
-    compile 'org.xwalk:xwalk_core_library:15.44.384.13'
+    compile 'org.xwalk:xwalk_core_library:20.50.533.12:arm@aar'
 }
 
 android {
@@ -36,7 +36,7 @@ android {
 
     defaultConfig {
         applicationId "org.example.xwalkembedded"
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -45,21 +45,6 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-
-    productFlavors {
-        armv7 {
-            versionCode defaultConfig.versionCode + 2
-            ndk {
-                abiFilters "armeabi-v7a", ""
-            }
-        }
-        x86 {
-            versionCode defaultConfig.versionCode + 4
-            ndk {
-                abiFilters "x86", ""
-            }
         }
     }
 }
